@@ -5,7 +5,7 @@ import { getStockPrice } from '../services/stockService.js';
 // Get all investments
 export const getInvestments = async (req, res) => {
   try {
-    const { dematAccountId } = req.query;
+    const dematAccountId = req.query.dematAccountId || req.query.demat_account_id;
 
     let query = { userId: req.user.userId };
     if (dematAccountId) query.dematAccountId = dematAccountId;
@@ -14,7 +14,19 @@ export const getInvestments = async (req, res) => {
       .populate('dematAccountId', 'brokerName')
       .sort({ createdAt: -1 });
 
-    res.json({ investments });
+    const normalized = investments.map((inv) => ({
+      id: inv._id,
+      demat_account_id: inv.dematAccountId?._id,
+      demat_broker_name: inv.dematAccountId?.brokerName,
+      stock_symbol: inv.stockSymbol,
+      stock_name: inv.stockName,
+      quantity: inv.quantity,
+      buy_price: inv.buyPrice,
+      buy_date: inv.buyDate,
+      created_at: inv.createdAt,
+    }));
+
+    res.json({ investments: normalized });
   } catch (error) {
     console.error('Get investments error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -24,9 +36,14 @@ export const getInvestments = async (req, res) => {
 // Add investment
 export const addInvestment = async (req, res) => {
   try {
-    const { dematAccountId, stockSymbol, stockName, quantity, buyPrice, buyDate } = req.body;
+    const dematAccountId = req.body.dematAccountId || req.body.demat_account_id;
+    const stockSymbol = (req.body.stockSymbol || req.body.stock_symbol || '').toUpperCase();
+    const stockName = req.body.stockName || req.body.stock_name;
+    const quantity = Number(req.body.quantity);
+    const buyPrice = Number(req.body.buyPrice ?? req.body.buy_price);
+    const buyDate = req.body.buyDate || req.body.buy_date;
 
-    if (!dematAccountId || !stockSymbol || !stockName || !quantity || !buyPrice || !buyDate) {
+    if (!dematAccountId || !stockSymbol || !stockName || Number.isNaN(quantity) || Number.isNaN(buyPrice) || !buyDate) {
       return res.status(400).json({ 
         error: 'Please provide all required fields' 
       });
@@ -45,7 +62,7 @@ export const addInvestment = async (req, res) => {
     const investment = await Investment.create({
       userId: req.user.userId,
       dematAccountId,
-      stockSymbol: stockSymbol.toUpperCase(),
+      stockSymbol,
       stockName,
       quantity,
       buyPrice,
@@ -54,7 +71,15 @@ export const addInvestment = async (req, res) => {
 
     res.status(201).json({
       message: 'Investment added successfully',
-      investment
+      investment: {
+        id: investment._id,
+        demat_account_id: investment.dematAccountId,
+        stock_symbol: investment.stockSymbol,
+        stock_name: investment.stockName,
+        quantity: investment.quantity,
+        buy_price: investment.buyPrice,
+        buy_date: investment.buyDate,
+      }
     });
   } catch (error) {
     console.error('Add investment error:', error);
@@ -66,7 +91,19 @@ export const addInvestment = async (req, res) => {
 export const updateInvestment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { dematAccountId, stockSymbol, stockName, quantity, buyPrice, buyDate } = req.body;
+    const dematAccountId = req.body.dematAccountId || req.body.demat_account_id;
+    const stockSymbol = req.body.stockSymbol || req.body.stock_symbol;
+    const stockName = req.body.stockName || req.body.stock_name;
+    const quantity = req.body.quantity !== undefined ? Number(req.body.quantity) : undefined;
+    const buyPrice = req.body.buyPrice !== undefined ? Number(req.body.buyPrice) : (req.body.buy_price !== undefined ? Number(req.body.buy_price) : undefined);
+    const buyDate = req.body.buyDate || req.body.buy_date;
+
+    if (quantity !== undefined && Number.isNaN(quantity)) {
+      return res.status(400).json({ error: 'Quantity must be a number' });
+    }
+    if (buyPrice !== undefined && Number.isNaN(buyPrice)) {
+      return res.status(400).json({ error: 'Buy price must be a number' });
+    }
 
     const investment = await Investment.findOne({ 
       _id: id, 
@@ -92,7 +129,15 @@ export const updateInvestment = async (req, res) => {
 
     res.json({
       message: 'Investment updated successfully',
-      investment: updatedInvestment
+      investment: {
+        id: updatedInvestment._id,
+        demat_account_id: updatedInvestment.dematAccountId,
+        stock_symbol: updatedInvestment.stockSymbol,
+        stock_name: updatedInvestment.stockName,
+        quantity: updatedInvestment.quantity,
+        buy_price: updatedInvestment.buyPrice,
+        buy_date: updatedInvestment.buyDate,
+      }
     });
   } catch (error) {
     console.error('Update investment error:', error);
@@ -130,10 +175,10 @@ export const getPortfolioSummary = async (req, res) => {
 
     if (investments.length === 0) {
       return res.json({
-        totalInvested: 0,
-        currentValue: 0,
-        totalProfitLoss: 0,
-        profitLossPercentage: 0,
+        total_invested: 0,
+        current_value: 0,
+        total_profit_loss: 0,
+        profit_loss_percentage: 0,
         holdings: []
       });
     }
@@ -142,12 +187,12 @@ export const getPortfolioSummary = async (req, res) => {
     const holdings = {};
 
     for (const inv of investments) {
-      const symbol = inv.stock_symbol;
+      const symbol = inv.stockSymbol;
       
       if (!holdings[symbol]) {
         holdings[symbol] = {
           stock_symbol: symbol,
-          stock_name: inv.stock_name,
+          stock_name: inv.stockName,
           total_quantity: 0,
           total_invested: 0,
           investments: []
@@ -155,8 +200,16 @@ export const getPortfolioSummary = async (req, res) => {
       }
 
       holdings[symbol].total_quantity += parseFloat(inv.quantity);
-      holdings[symbol].total_invested += parseFloat(inv.quantity) * parseFloat(inv.buy_price);
-      holdings[symbol].investments.push(inv);
+      holdings[symbol].total_invested += parseFloat(inv.quantity) * parseFloat(inv.buyPrice);
+      holdings[symbol].investments.push({
+        id: inv._id,
+        demat_account_id: inv.dematAccountId,
+        stock_symbol: inv.stockSymbol,
+        stock_name: inv.stockName,
+        quantity: inv.quantity,
+        buy_price: inv.buyPrice,
+        buy_date: inv.buyDate,
+      });
     }
 
     // Get live prices for all stocks

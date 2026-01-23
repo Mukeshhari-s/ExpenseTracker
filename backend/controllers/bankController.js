@@ -4,7 +4,18 @@ import BankAccount from '../models/BankAccount.js';
 export const getBankAccounts = async (req, res) => {
   try {
     const accounts = await BankAccount.find({ userId: req.user.userId }).sort({ createdAt: -1 });
-    res.json({ accounts });
+
+    // Normalize for frontend (snake_case + id)
+    const normalized = accounts.map((account) => ({
+      id: account._id,
+      bank_name: account.bankName,
+      account_number: account.accountNumber,
+      account_type: account.accountType,
+      balance: account.balance,
+      created_at: account.createdAt,
+    }));
+
+    res.json({ accounts: normalized });
   } catch (error) {
     console.error('Get bank accounts error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -14,7 +25,11 @@ export const getBankAccounts = async (req, res) => {
 // Add new bank account
 export const addBankAccount = async (req, res) => {
   try {
-    const { bankName, accountNumber, accountType = 'Savings', balance = 0 } = req.body;
+    // Accept both camelCase and snake_case from client
+    const bankName = req.body.bankName || req.body.bank_name;
+    const accountNumber = req.body.accountNumber || req.body.account_number;
+    const accountType = req.body.accountType || req.body.account_type || 'Savings';
+    const balance = Number(req.body.balance ?? 0);
 
     if (!bankName || !accountNumber) {
       return res.status(400).json({ error: 'Please provide bank name and account number' });
@@ -30,7 +45,13 @@ export const addBankAccount = async (req, res) => {
 
     res.status(201).json({
       message: 'Bank account added successfully',
-      account
+      account: {
+        id: account._id,
+        bank_name: account.bankName,
+        account_number: account.accountNumber,
+        account_type: account.accountType,
+        balance: account.balance,
+      }
     });
   } catch (error) {
     console.error('Add bank account error:', error);
@@ -42,7 +63,10 @@ export const addBankAccount = async (req, res) => {
 export const updateBankAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    const { bankName, accountNumber, accountType, balance } = req.body;
+    const bankName = req.body.bankName || req.body.bank_name;
+    const accountNumber = req.body.accountNumber || req.body.account_number;
+    const accountType = req.body.accountType || req.body.account_type;
+    const balance = req.body.balance !== undefined ? Number(req.body.balance) : undefined;
 
     const account = await BankAccount.findOneAndUpdate(
       { _id: id, userId: req.user.userId },
@@ -61,7 +85,13 @@ export const updateBankAccount = async (req, res) => {
 
     res.json({
       message: 'Bank account updated successfully',
-      account
+      account: {
+        id: account._id,
+        bank_name: account.bankName,
+        account_number: account.accountNumber,
+        account_type: account.accountType,
+        balance: account.balance,
+      }
     });
   } catch (error) {
     console.error('Update bank account error:', error);
@@ -98,7 +128,13 @@ export const getAccountSummary = async (req, res) => {
     res.json({
       totalAccounts,
       totalBalance,
-      accounts
+      accounts: accounts.map((account) => ({
+        id: account._id,
+        bank_name: account.bankName,
+        account_number: account.accountNumber,
+        account_type: account.accountType,
+        balance: account.balance,
+      }))
     });
   } catch (error) {
     console.error('Get account summary error:', error);

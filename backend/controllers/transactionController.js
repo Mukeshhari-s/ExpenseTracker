@@ -4,7 +4,8 @@ import BankAccount from '../models/BankAccount.js';
 // Get all transactions
 export const getTransactions = async (req, res) => {
   try {
-    const { type, bankAccountId, startDate, endDate, category } = req.query;
+    const { type, startDate, endDate, category } = req.query;
+    const bankAccountId = req.query.bankAccountId || req.query.bank_account_id;
 
     let query = { userId: req.user.userId };
 
@@ -19,10 +20,24 @@ export const getTransactions = async (req, res) => {
     }
 
     const transactions = await Transaction.find(query)
-      .populate('bankAccountId', 'bankName')
+      .populate('bankAccountId', 'bankName accountType')
       .sort({ date: -1, createdAt: -1 });
 
-    res.json({ transactions });
+    // Normalize response for frontend expectations
+    const normalized = transactions.map((tx) => ({
+      id: tx._id,
+      bank_account_id: tx.bankAccountId?._id,
+      bank_name: tx.bankAccountId?.bankName,
+      bank_account_type: tx.bankAccountId?.accountType,
+      type: tx.type,
+      amount: tx.amount,
+      category: tx.category,
+      source: tx.source,
+      notes: tx.notes,
+      date: tx.date,
+    }));
+
+    res.json({ transactions: normalized });
   } catch (error) {
     console.error('Get transactions error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -32,9 +47,16 @@ export const getTransactions = async (req, res) => {
 // Add new transaction
 export const addTransaction = async (req, res) => {
   try {
-    const { bankAccountId, type, amount, category, source, notes, date } = req.body;
+    // Accept camelCase or snake_case
+    const bankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const type = req.body.type;
+    const amount = Number(req.body.amount);
+    const category = req.body.category;
+    const source = req.body.source;
+    const notes = req.body.notes;
+    const date = req.body.date;
 
-    if (!bankAccountId || !type || !amount || !date) {
+    if (!bankAccountId || !type || Number.isNaN(amount) || !date) {
       return res.status(400).json({ 
         error: 'Please provide bankAccountId, type, amount, and date' 
       });
@@ -74,7 +96,16 @@ export const addTransaction = async (req, res) => {
 
     res.status(201).json({
       message: 'Transaction added successfully',
-      transaction
+      transaction: {
+        id: transaction._id,
+        bank_account_id: transaction.bankAccountId,
+        type: transaction.type,
+        amount: transaction.amount,
+        category: transaction.category,
+        source: transaction.source,
+        notes: transaction.notes,
+        date: transaction.date,
+      }
     });
   } catch (error) {
     console.error('Add transaction error:', error);
@@ -86,7 +117,9 @@ export const addTransaction = async (req, res) => {
 export const updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
-    const { bankAccountId, type, amount, category, source, notes, date } = req.body;
+    const bankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const { type, category, source, notes, date } = req.body;
+    const amount = req.body.amount !== undefined ? Number(req.body.amount) : undefined;
 
     const transaction = await Transaction.findOne({ 
       _id: id, 
@@ -95,6 +128,10 @@ export const updateTransaction = async (req, res) => {
 
     if (!transaction) {
       return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    if (amount !== undefined && Number.isNaN(amount)) {
+      return res.status(400).json({ error: 'Amount must be a number' });
     }
 
     // Revert old balance change
@@ -128,7 +165,16 @@ export const updateTransaction = async (req, res) => {
 
     res.json({
       message: 'Transaction updated successfully',
-      transaction: updatedTransaction
+      transaction: {
+        id: updatedTransaction._id,
+        bank_account_id: updatedTransaction.bankAccountId,
+        type: updatedTransaction.type,
+        amount: updatedTransaction.amount,
+        category: updatedTransaction.category,
+        source: updatedTransaction.source,
+        notes: updatedTransaction.notes,
+        date: updatedTransaction.date,
+      }
     });
   } catch (error) {
     console.error('Update transaction error:', error);
@@ -187,46 +233,50 @@ export const getMonthlySummary = async (req, res) => {
       endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`;
     }
 
-    const income = await get(
-      `SELECT COALESCE(SUM(amount), 0) as total 
-       FROM transactions 
-       WHERE user_id = ? AND type = 'income' AND date BETWEEN ? AND ?`,
-      [req.user.userId, startDate, endDate]
-    );
+    const userMatch = { userId: req.user.userId, date: { $gte: new Date(startDate), $lte: new Date(endDate) } };
 
-    const expenses = await get(
-      `SELECT COALESCE(SUM(amount), 0) as total 
-       FROM transactions 
-       WHERE user_id = ? AND type = 'expense' AND date BETWEEN ? AND ?`,
-      [req.user.userId, startDate, endDate]
-    );
+    const [incomeAgg, expenseAgg, expensesByCategory, expensesByBank] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { ...userMatch, type: 'income' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { ...userMatch, type: 'expense' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { ...userMatch, type: 'expense' } },
+        { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $sort: { total: -1 } }
+      ]),
+      Transaction.aggregate([
+        { $match: { ...userMatch, type: 'expense' } },
+        { $group: { _id: '$bankAccountId', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $lookup: { from: 'bankaccounts', localField: '_id', foreignField: '_id', as: 'bank' } },
+        { $unwind: { path: '$bank', preserveNullAndEmptyArrays: true } },
+        { $sort: { total: -1 } }
+      ]),
+    ]);
 
-    const expensesByCategory = await all(
-      `SELECT category, SUM(amount) as total, COUNT(*) as count
-       FROM transactions 
-       WHERE user_id = ? AND type = 'expense' AND date BETWEEN ? AND ?
-       GROUP BY category
-       ORDER BY total DESC`,
-      [req.user.userId, startDate, endDate]
-    );
-
-    const expensesByBank = await all(
-      `SELECT b.bank_name, SUM(t.amount) as total, COUNT(*) as count
-       FROM transactions t
-       LEFT JOIN bank_accounts b ON t.bank_account_id = b.id
-       WHERE t.user_id = ? AND t.type = 'expense' AND t.date BETWEEN ? AND ?
-       GROUP BY t.bank_account_id
-       ORDER BY total DESC`,
-      [req.user.userId, startDate, endDate]
-    );
+    const incomeTotal = incomeAgg[0]?.total || 0;
+    const expenseTotal = expenseAgg[0]?.total || 0;
 
     res.json({
       period: { start: startDate, end: endDate },
-      total_income: income.total,
-      total_expenses: expenses.total,
-      net_savings: income.total - expenses.total,
-      expenses_by_category: expensesByCategory,
-      expenses_by_bank: expensesByBank
+      total_income: incomeTotal,
+      total_expenses: expenseTotal,
+      net_savings: incomeTotal - expenseTotal,
+      expenses_by_category: expensesByCategory.map((c) => ({
+        category: c._id || 'Uncategorized',
+        total: c.total,
+        count: c.count,
+      })),
+      expenses_by_bank: expensesByBank.map((b) => ({
+        bank_account_id: b._id,
+        bank_name: b.bank?.bankName,
+        total: b.total,
+        count: b.count,
+      }))
     });
   } catch (error) {
     console.error('Get monthly summary error:', error);
@@ -237,11 +287,8 @@ export const getMonthlySummary = async (req, res) => {
 // Get expense categories
 export const getCategories = async (req, res) => {
   try {
-    const categories = await all(
-      `SELECT DISTINCT category FROM transactions WHERE user_id = ? AND category IS NOT NULL ORDER BY category`,
-      [req.user.userId]
-    );
-    res.json({ categories: categories.map(c => c.category) });
+    const categories = await Transaction.distinct('category', { userId: req.user.userId, category: { $ne: null } });
+    res.json({ categories });
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ error: 'Server error' });

@@ -4,7 +4,15 @@ import DematAccount from '../models/DematAccount.js';
 export const getDematAccounts = async (req, res) => {
   try {
     const accounts = await DematAccount.find({ userId: req.user.userId }).sort({ createdAt: -1 });
-    res.json({ accounts });
+
+    const normalized = accounts.map((account) => ({
+      id: account._id,
+      broker_name: account.brokerName,
+      account_number: account.accountNumber,
+      created_at: account.createdAt,
+    }));
+
+    res.json({ accounts: normalized });
   } catch (error) {
     console.error('Get demat accounts error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -14,7 +22,8 @@ export const getDematAccounts = async (req, res) => {
 // Add demat account
 export const addDematAccount = async (req, res) => {
   try {
-    const { brokerName, accountNumber } = req.body;
+    const brokerName = req.body.brokerName || req.body.broker_name;
+    const accountNumber = req.body.accountNumber || req.body.account_number;
 
     if (!brokerName || !accountNumber) {
       return res.status(400).json({ 
@@ -30,7 +39,11 @@ export const addDematAccount = async (req, res) => {
 
     res.status(201).json({
       message: 'Demat account added successfully',
-      account
+      account: {
+        id: account._id,
+        broker_name: account.brokerName,
+        account_number: account.accountNumber,
+      }
     });
   } catch (error) {
     console.error('Add demat account error:', error);
@@ -42,7 +55,8 @@ export const addDematAccount = async (req, res) => {
 export const updateDematAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    const { brokerName, accountNumber } = req.body;
+    const brokerName = req.body.brokerName || req.body.broker_name;
+    const accountNumber = req.body.accountNumber || req.body.account_number;
 
     const account = await DematAccount.findOneAndUpdate(
       { _id: id, userId: req.user.userId },
@@ -59,7 +73,11 @@ export const updateDematAccount = async (req, res) => {
 
     res.json({
       message: 'Demat account updated successfully',
-      account
+      account: {
+        id: account._id,
+        broker_name: account.brokerName,
+        account_number: account.accountNumber,
+      }
     });
   } catch (error) {
     console.error('Update demat account error:', error);

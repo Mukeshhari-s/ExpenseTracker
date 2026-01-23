@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
+import StockSearch from './StockSearch';
 import { 
   investmentAPI, 
   dematAPI, 
@@ -12,7 +13,8 @@ import {
   TrendingUp, 
   TrendingDown,
   RefreshCw,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 import { getUser } from '../utils/auth';
 
@@ -27,6 +29,7 @@ function Portfolio() {
   const [showInvestmentModal, setShowInvestmentModal] = useState(false);
   const [editingDemat, setEditingDemat] = useState(null);
   const [editingInvestment, setEditingInvestment] = useState(null);
+  const [showStockSearch, setShowStockSearch] = useState(false);
 
   const [dematForm, setDematForm] = useState({
     broker_name: '',
@@ -112,6 +115,16 @@ function Portfolio() {
     });
     setEditingInvestment(null);
     setShowInvestmentModal(true);
+  };
+
+  const handleStockSelected = (stock) => {
+    setInvestmentForm((prev) => ({
+      ...prev,
+      stock_symbol: stock.symbol || prev.stock_symbol,
+      stock_name: stock.name || prev.stock_name,
+      buy_price: stock.price ?? prev.buy_price,
+    }));
+    setShowStockSearch(false);
   };
 
   const handleSaveInvestment = async (e) => {
@@ -275,6 +288,7 @@ function Portfolio() {
                 <tbody>
                   {portfolio.holdings.map((holding) => {
                     const profitLoss = holding.profit_loss;
+                    const profitLossPct = holding.profit_loss_percentage ?? 0;
                     const isProfitable = profitLoss >= 0;
                     
                     return (
@@ -293,7 +307,7 @@ function Portfolio() {
                         <td className={`text-right py-4 px-4 font-bold ${isProfitable ? 'profit' : 'loss'}`}>
                           <div>
                             <p>{isProfitable ? '+' : ''}{formatCurrency(profitLoss)}</p>
-                            <p className="text-sm">{isProfitable ? '+' : ''}{holding.profit_loss_percentage.toFixed(2)}%</p>
+                            <p className="text-sm">{isProfitable ? '+' : ''}{profitLossPct.toFixed(2)}%</p>
                           </div>
                         </td>
                         <td className="text-center py-4 px-4">
@@ -403,6 +417,15 @@ function Portfolio() {
                     required 
                   />
                 </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowStockSearch(true)}
+                    className="w-full btn-secondary"
+                  >
+                    Search & autofill stock
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
@@ -442,6 +465,21 @@ function Portfolio() {
                   <button type="button" onClick={() => setShowInvestmentModal(false)} className="flex-1 btn-secondary">Cancel</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Stock Search Overlay */}
+        {showStockSearch && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 w-full max-w-3xl shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-bold text-gray-800">Search Stocks</h4>
+                <button onClick={() => setShowStockSearch(false)} className="p-1 hover:bg-gray-100 rounded">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+              <StockSearch onSelect={handleStockSelected} onClose={() => setShowStockSearch(false)} showPrice={true} />
             </div>
           </div>
         )}
