@@ -8,6 +8,16 @@ import {
   loadStockMaster 
 } from '../services/nseLoader.js';
 
+// Normalize symbols so callers can pass INFY or INFY.NS and still get data
+const normalizeSymbol = (symbol, exchangeHint = 'NSE') => {
+  if (!symbol) return null;
+  const trimmed = symbol.trim().toUpperCase();
+  if (trimmed.includes('.')) return trimmed;
+  const exchange = exchangeHint?.toUpperCase() === 'BSE' ? 'BSE' : 'NSE';
+  const suffix = exchange === 'BSE' ? '.BO' : '.NS';
+  return `${trimmed}${suffix}`;
+};
+
 /**
  * GET /api/market/price/:symbol
  * Get live market price with day change and percentage change
@@ -16,6 +26,7 @@ import {
 export const getMarketPrice = async (req, res) => {
   try {
     const { symbol } = req.params;
+    const { exchange } = req.query;
 
     if (!symbol) {
       return res.status(400).json({ 
@@ -24,14 +35,7 @@ export const getMarketPrice = async (req, res) => {
       });
     }
 
-    // Validate symbol format (should have .NS or .BO)
-    const normalizedSymbol = symbol.toUpperCase();
-    if (!normalizedSymbol.includes('.')) {
-      return res.status(400).json({ 
-        error: 'Invalid symbol format. Use INFY.NS (NSE) or INFY.BO (BSE)',
-        example: 'INFY.NS or TCS.NS'
-      });
-    }
+    const normalizedSymbol = normalizeSymbol(symbol, exchange);
 
     const priceData = await getStockPrice(normalizedSymbol);
 
@@ -60,6 +64,7 @@ export const getMarketPrice = async (req, res) => {
 export const getMultipleMarketPrices = async (req, res) => {
   try {
     const { symbols } = req.query;
+    const { exchange } = req.query;
 
     if (!symbols) {
       return res.status(400).json({ 
@@ -68,7 +73,10 @@ export const getMultipleMarketPrices = async (req, res) => {
       });
     }
 
-    const symbolArray = symbols.split(',').map(s => s.trim().toUpperCase());
+    const symbolArray = symbols
+      .split(',')
+      .map(s => normalizeSymbol(s, exchange))
+      .filter(Boolean);
 
     if (symbolArray.length === 0 || symbolArray.length > 20) {
       return res.status(400).json({ 
@@ -140,12 +148,14 @@ export const getStockList = async (req, res) => {
 export const getStockDetails = async (req, res) => {
   try {
     const { symbol } = req.params;
+    const { exchange } = req.query;
 
     if (!symbol) {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const stock = await getStockBySymbol(symbol.toUpperCase());
+    const normalizedSymbol = normalizeSymbol(symbol, exchange);
+    const stock = await getStockBySymbol(normalizedSymbol);
 
     if (!stock) {
       return res.status(404).json({ 
@@ -155,7 +165,7 @@ export const getStockDetails = async (req, res) => {
     }
 
     // Fetch live price for the stock
-    const priceData = await getStockPrice(symbol.toUpperCase());
+    const priceData = await getStockPrice(normalizedSymbol);
 
     res.json({
       success: true,
@@ -243,13 +253,14 @@ export const initializeStockMaster = async (req, res) => {
 export const getLiveStockPrice = getMarketPrice;
 export const getMultipleStockPrices = async (req, res) => {
   try {
-    const { symbols } = req.body;
+    const { symbols, exchange } = req.body;
 
     if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
       return res.status(400).json({ error: 'Please provide an array of stock symbols' });
     }
 
-    const prices = await getMultiplePrices(symbols);
+    const normalized = symbols.map(s => normalizeSymbol(s, exchange)).filter(Boolean);
+    const prices = await getMultiplePrices(normalized);
 
     res.json({
       success: true,

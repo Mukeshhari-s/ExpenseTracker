@@ -10,6 +10,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let stockMaster = null;
 let lastLoadTime = null;
 
+// Primary and backup NSE Bhavcopy endpoints (same data, different hosts)
+const NSE_BHAVCOPY_URLS = [
+  'https://archives.nseindia.com/content/equities/EQUITY_L.csv',
+  'https://www1.nseindia.com/content/equities/EQUITY_L.csv'
+];
+
+const NSE_REQUEST_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+  'Accept': 'text/csv,text/plain,*/*',
+  'Referer': 'https://www.nseindia.com'
+};
+
 /**
  * NSE Stock Master List from Bhavcopy
  * Official source: NSE website (we use a local JSON fallback)
@@ -65,6 +77,26 @@ const DEFAULT_STOCKS = [
   { symbol: 'HDFCBANK.BO', name: 'HDFC Bank Limited', exchange: 'BSE', sector: 'Finance' },
 ];
 
+// Try to fetch the latest Bhavcopy from NSE (rotates through backup URLs)
+const fetchNSEBhavcopy = async () => {
+  for (const url of NSE_BHAVCOPY_URLS) {
+    try {
+      const response = await axios.get(url, {
+        timeout: 10000,
+        headers: NSE_REQUEST_HEADERS
+      });
+
+      if (response?.data) {
+        return { data: response.data, source: url };
+      }
+    } catch (error) {
+      console.log(`[STOCK MASTER] NSE fetch failed from ${url}: ${error.message}`);
+    }
+  }
+
+  return null;
+};
+
 /**
  * Load NSE stock master list (cached in memory)
  * Can load from:
@@ -82,35 +114,33 @@ export const loadStockMaster = async (db = null) => {
     console.log('[STOCK MASTER] Loading stock list...');
 
     // Try Option 1: Fetch from NSE website (Bhavcopy format)
-    try {
-      const response = await axios.get(
-        'https://www1.nseindia.com/content/equities/EQUITY_L.csv',
-        { timeout: 10000 }
-      );
+    const bhavcopy = await fetchNSEBhavcopy();
+    if (bhavcopy?.data) {
+      try {
+        const stocks = parse(bhavcopy.data, {
+          columns: true,
+          skip_empty_lines: true
+        }).map(row => ({
+          symbol: `${row['SYMBOL']}.NS`,
+          name: row['NAME OF COMPANY'] || row['SYMBOL'],
+          exchange: 'NSE',
+          isinCode: row['ISIN CODE'] || null,
+          sector: row['INDUSTRY'] || 'Others'
+        }));
 
-      const stocks = parse(response.data, {
-        columns: true,
-        skip_empty_lines: true
-      }).map(row => ({
-        symbol: `${row['SYMBOL']}.NS`,
-        name: row['NAME OF COMPANY'] || row['SYMBOL'],
-        exchange: 'NSE',
-        isinCode: row['ISIN CODE'] || null,
-        sector: row['INDUSTRY'] || 'Others'
-      }));
-
-      stockMaster = stocks;
-      lastLoadTime = new Date();
-      console.log(`[STOCK MASTER] Loaded ${stocks.length} stocks from NSE Bhavcopy`);
-      
-      // Optionally persist to DB
-      if (db) {
-        await persistStocksToDB(db, stocks);
+        stockMaster = stocks;
+        lastLoadTime = new Date();
+        console.log(`[STOCK MASTER] Loaded ${stocks.length} stocks from NSE Bhavcopy (${bhavcopy.source})`);
+        
+        // Optionally persist to DB
+        if (db) {
+          await persistStocksToDB(db, stocks);
+        }
+        
+        return stocks;
+      } catch (parseError) {
+        console.log('[STOCK MASTER] NSE Bhavcopy parse failed:', parseError.message);
       }
-      
-      return stocks;
-    } catch (nseError) {
-      console.log('[STOCK MASTER] NSE Bhavcopy fetch failed:', nseError.message);
     }
 
     // Try Option 2: Load from local JSON file
