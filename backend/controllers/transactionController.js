@@ -1,10 +1,11 @@
 import Transaction from '../models/Transaction.js';
 import BankAccount from '../models/BankAccount.js';
+import mongoose from 'mongoose';
 
 // Get all transactions
 export const getTransactions = async (req, res) => {
   try {
-    const { type, startDate, endDate, category } = req.query;
+    const { type, startDate, endDate, category, limit } = req.query;
     const bankAccountId = req.query.bankAccountId || req.query.bank_account_id;
 
     let query = { userId: req.user.userId };
@@ -19,9 +20,16 @@ export const getTransactions = async (req, res) => {
       if (endDate) query.date.$lte = new Date(endDate);
     }
 
-    const transactions = await Transaction.find(query)
+    let transactionQuery = Transaction.find(query)
       .populate('bankAccountId', 'bankName accountType')
       .sort({ date: -1, createdAt: -1 });
+
+    // Apply limit if provided
+    if (limit) {
+      transactionQuery = transactionQuery.limit(parseInt(limit));
+    }
+
+    const transactions = await transactionQuery;
 
     // Normalize response for frontend expectations
     const normalized = transactions.map((tx) => ({
@@ -221,19 +229,48 @@ export const getMonthlySummary = async (req, res) => {
     
     if (month && year) {
       startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      // Calculate last day of the month (month is 1-indexed from API)
       const lastDay = new Date(year, month, 0).getDate();
-      endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+      endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
     } else {
       // Current month
       const now = new Date();
       const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
+      const currentMonth = now.getMonth() + 1; // 1-indexed
       startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+      // Calculate last day of current month (use next month's day 0)
       const lastDay = new Date(currentYear, currentMonth, 0).getDate();
-      endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`;
+      endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
     }
 
-    const userMatch = { userId: req.user.userId, date: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+    const startDateObj = new Date(`${startDate}T00:00:00Z`);
+    const endDateObj = new Date(`${endDate}T23:59:59Z`);
+    
+    console.log(`[MONTHLY SUMMARY] Date range: ${startDate} to ${endDate}`);
+    console.log(`[MONTHLY SUMMARY] Start: ${startDateObj.toISOString()}, End: ${endDateObj.toISOString()}`);
+
+    // Convert userId to ObjectId for aggregate queries
+    const userObjectId = new mongoose.Types.ObjectId(req.user.userId);
+
+    // Only include transactions linked to bank accounts
+    const userMatch = { 
+      userId: userObjectId, 
+      bankAccountId: { $exists: true, $ne: null },
+      date: { 
+        $gte: startDateObj, 
+        $lte: endDateObj
+      } 
+    };
+
+    // Debug: Check total transactions for this user
+    const allTransactions = await Transaction.find({ userId: req.user.userId }).sort({ date: -1 });
+    console.log(`[MONTHLY SUMMARY] Total transactions for user: ${allTransactions.length}`);
+    allTransactions.slice(0, 3).forEach(tx => {
+      console.log(`  - Date: ${tx.date.toISOString()}, Type: ${tx.type}, Amount: ${tx.amount}, BankId: ${tx.bankAccountId || 'N/A'}`);
+    });
+
+    const filteredTransactions = await Transaction.find({ userId: req.user.userId, bankAccountId: { $exists: true, $ne: null }, date: { $gte: startDateObj, $lte: endDateObj } });
+    console.log(`[MONTHLY SUMMARY] Bank transactions for date range: ${filteredTransactions.length}`);
 
     const [incomeAgg, expenseAgg, expensesByCategory, expensesByBank] = await Promise.all([
       Transaction.aggregate([
@@ -260,6 +297,8 @@ export const getMonthlySummary = async (req, res) => {
 
     const incomeTotal = incomeAgg[0]?.total || 0;
     const expenseTotal = expenseAgg[0]?.total || 0;
+
+    console.log(`[MONTHLY SUMMARY] UserId: ${req.user.userId}, Income: ${incomeTotal}, Expenses: ${expenseTotal}`);
 
     res.json({
       period: { start: startDate, end: endDate },

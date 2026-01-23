@@ -221,15 +221,19 @@ export const getPortfolioSummary = async (req, res) => {
       const holding = holdings[symbol];
       const avgBuyPrice = holding.total_invested / holding.total_quantity;
 
-      // Fetch live price
+      // Fetch live price - normalize symbol with .NS suffix if not already present
       let currentPrice = avgBuyPrice; // Default to buy price
       try {
-        const livePrice = await getStockPrice(symbol);
-        if (livePrice) {
-          currentPrice = livePrice;
+        const normalizedSymbol = symbol.includes('.') ? symbol : `${symbol}.NS`;
+        const livePrice = await getStockPrice(normalizedSymbol);
+        if (livePrice && livePrice.price) {
+          currentPrice = livePrice.price;
+          console.log(`[PORTFOLIO] ${symbol} -> ${normalizedSymbol}: ₹${currentPrice}`);
+        } else {
+          console.log(`[PORTFOLIO] ${symbol} -> ${normalizedSymbol}: No price data, using avg buy price ₹${avgBuyPrice}`);
         }
       } catch (error) {
-        console.log(`Could not fetch live price for ${symbol}, using average buy price`);
+        console.log(`[PORTFOLIO ERROR] Could not fetch live price for ${symbol}: ${error.message}`);
       }
 
       const currentValue = holding.total_quantity * currentPrice;

@@ -120,7 +120,7 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
     <div className="w-full max-w-2xl mx-auto">
       {/* Search Input */}
       <div ref={searchInputRef} className="relative">
-        <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200">
+        <div className="flex items-center gap-2 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-900/20">
           <Search size={20} className="text-gray-400" />
           <input
             type="text"
@@ -146,7 +146,7 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
         {/* Loading indicator */}
         {loading && (
           <div className="absolute right-3 top-2.5">
-            <div className="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
           </div>
         )}
 
@@ -159,7 +159,7 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
 
         {/* Search Results Dropdown */}
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
             {/* Results */}
             {results.length > 0 ? (
               <div className="divide-y">
@@ -167,11 +167,11 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
                   <div
                     key={stock.symbol}
                     onClick={() => handleSelectStock(stock)}
-                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between transition"
+                    className="px-3 py-2 hover:bg-gray-700/50 cursor-pointer flex items-center justify-between transition"
                   >
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{stock.symbol}</div>
-                      <div className="text-sm text-gray-500 truncate">{stock.name}</div>
+                      <div className="font-medium text-gray-100">{stock.symbol}</div>
+                      <div className="text-sm text-gray-400 truncate">{stock.name}</div>
                     </div>
                     <div className="text-right ml-2">
                       <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap">
@@ -182,23 +182,23 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
                 ))}
               </div>
             ) : query ? (
-              <div className="px-3 py-6 text-center text-gray-500 text-sm">
+              <div className="px-3 py-6 text-center text-gray-400 text-sm">
                 No stocks found for "{query}"
               </div>
             ) : recentSearches.length > 0 ? (
               <div className="divide-y">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-700">
                   Recent Searches
                 </div>
                 {recentSearches.map((stock) => (
                   <div
                     key={stock.symbol}
                     onClick={() => handleSelectStock(stock)}
-                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between transition"
+                    className="px-3 py-2 hover:bg-gray-700/50 cursor-pointer flex items-center justify-between transition"
                   >
                     <div>
-                      <div className="font-medium text-gray-900">{stock.symbol}</div>
-                      <div className="text-xs text-gray-500">{stock.name}</div>
+                      <div className="font-medium text-gray-100">{stock.symbol}</div>
+                      <div className="text-xs text-gray-400">{stock.name}</div>
                     </div>
                     <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                       {stock.exchange}
@@ -207,7 +207,7 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
                 ))}
               </div>
             ) : (
-              <div className="px-3 py-6 text-center text-gray-500 text-sm">
+              <div className="px-3 py-6 text-center text-gray-400 text-sm">
                 Start typing to search stocks
               </div>
             )}
@@ -217,23 +217,23 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
 
       {/* Selected Stock Details */}
       {selectedResult && (
-        <div className="mt-4 bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 rounded-lg p-4">
+        <div className="mt-4 bg-gradient-to-r from-blue-900/20 to-blue-900/20 border border-blue-600 rounded-lg p-4">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900">{selectedResult.symbol}</div>
-              <div className="text-gray-600">{selectedResult.name}</div>
+              <div className="text-2xl font-bold text-gray-100">{selectedResult.symbol}</div>
+              <div className="text-gray-300">{selectedResult.name}</div>
               <div className="mt-2 flex items-center gap-4">
                 {selectedResult.price && (
                   <>
                     <div>
-                      <div className="text-xs text-gray-500">Price</div>
-                      <div className="text-lg font-semibold text-gray-900">
+                      <div className="text-xs text-gray-400">Price</div>
+                      <div className="text-lg font-semibold text-gray-100">
                         ₹{selectedResult.price.toFixed(2)}
                       </div>
                     </div>
                     {selectedResult.dayChange !== undefined && (
                       <div>
-                        <div className="text-xs text-gray-500">Day Change</div>
+                        <div className="text-xs text-gray-400">Day Change</div>
                         <div className={`text-lg font-semibold flex items-center gap-1 ${
                           selectedResult.dayChange >= 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
@@ -259,14 +259,14 @@ const StockSearch = ({ onSelect, onClose, showPrice = true }) => {
           <div className="mt-4 flex gap-2">
             <button
               onClick={() => setSelectedResult(null)}
-              className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded hover:bg-gray-700/50 transition"
             >
               Search Another
             </button>
             {onClose && (
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
               >
                 Close
               </button>

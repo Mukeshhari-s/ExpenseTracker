@@ -32,15 +32,15 @@ function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-800 hidden sm:block">
+            <span className="text-xl font-bold text-gray-100 hidden sm:block">
               Finance Tracker
             </span>
           </Link>
@@ -53,8 +53,8 @@ function Navbar() {
                 to={item.path}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                   isActive(item.path)
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -69,8 +69,8 @@ function Navbar() {
               to="/profile"
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 isActive('/profile')
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700'
               }`}
             >
               {user?.profile_photo ? (
@@ -87,7 +87,7 @@ function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Logout</span>
@@ -97,19 +97,19 @@ function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg hover:bg-gray-700"
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-gray-700" />
+              <X className="w-6 h-6 text-gray-300" />
             ) : (
-              <Menu className="w-6 h-6 text-gray-700" />
+              <Menu className="w-6 h-6 text-gray-300" />
             )}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-gray-700">
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -117,8 +117,8 @@ function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors mb-1 ${
                   isActive(item.path)
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -131,8 +131,8 @@ function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors mb-1 ${
                 isActive('/profile')
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700'
               }`}
             >
               <User className="w-5 h-5" />
@@ -144,7 +144,7 @@ function Navbar() {
                 setMobileMenuOpen(false);
                 handleLogout();
               }}
-              className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Logout</span>

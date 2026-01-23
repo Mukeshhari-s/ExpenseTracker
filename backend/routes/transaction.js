@@ -13,11 +13,13 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+// Specific routes must come before :id routes
+router.get('/summary/monthly', getMonthlySummary);
+router.get('/categories', getCategories);
+
 router.get('/', getTransactions);
 router.post('/', addTransaction);
 router.put('/:id', updateTransaction);
 router.delete('/:id', deleteTransaction);
-router.get('/summary/monthly', getMonthlySummary);
-router.get('/categories', getCategories);
 
 export default router;

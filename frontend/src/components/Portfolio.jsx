@@ -181,7 +181,7 @@ function Portfolio() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Investment Portfolio</h1>
+          <h1 className="text-3xl font-bold text-gray-100">Investment Portfolio</h1>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -195,7 +195,7 @@ function Portfolio() {
         {/* Demat Accounts */}
         <div className="card mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Demat Accounts</h2>
+            <h2 className="text-2xl font-bold text-gray-100">Demat Accounts</h2>
             <button onClick={handleAddDemat} className="btn-primary flex items-center space-x-2">
               <Plus className="w-5 h-5" />
               <span>Add Demat Account</span>
@@ -220,12 +220,12 @@ function Portfolio() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">No demat accounts yet. Add one to start investing!</p>
+            <p className="text-center text-gray-400 py-8">No demat accounts yet. Add one to start investing!</p>
           )}
         </div>
 
         {/* Portfolio Summary - Angel One Inspired */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white rounded-2xl p-8 mb-8 shadow-xl">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-8 mb-8 shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <p className="text-sm opacity-90 mb-1">Total Invested</p>
@@ -259,7 +259,7 @@ function Portfolio() {
         {/* Holdings */}
         <div className="card">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Holdings</h2>
+            <h2 className="text-2xl font-bold text-gray-100">Holdings</h2>
             <button 
               onClick={handleAddInvestment} 
               className="btn-primary flex items-center space-x-2"
@@ -274,15 +274,15 @@ function Portfolio() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Stock</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Qty</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Avg Price</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">LTP</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Invested</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Current</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">P&L</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-200">Stock</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Qty</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Avg Price</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">LTP</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Invested</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Current</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-200">P&L</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,18 +292,18 @@ function Portfolio() {
                     const isProfitable = profitLoss >= 0;
                     
                     return (
-                      <tr key={holding.stock_symbol} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={holding.stock_symbol} className="border-b border-gray-700 hover:bg-gray-700/50">
                         <td className="py-4 px-4">
                           <div>
-                            <p className="font-semibold text-gray-800">{holding.stock_symbol}</p>
-                            <p className="text-sm text-gray-600">{holding.stock_name}</p>
+                            <p className="font-semibold text-gray-100">{holding.stock_symbol}</p>
+                            <p className="text-sm text-gray-300">{holding.stock_name}</p>
                           </div>
                         </td>
-                        <td className="text-right py-4 px-4 text-gray-800">{holding.quantity}</td>
-                        <td className="text-right py-4 px-4 text-gray-800">{formatCurrency(holding.avg_buy_price)}</td>
-                        <td className="text-right py-4 px-4 font-medium text-gray-800">{formatCurrency(holding.current_price)}</td>
-                        <td className="text-right py-4 px-4 text-gray-800">{formatCurrency(holding.invested_amount)}</td>
-                        <td className="text-right py-4 px-4 font-medium text-gray-800">{formatCurrency(holding.current_value)}</td>
+                        <td className="text-right py-4 px-4 text-gray-100">{holding.quantity}</td>
+                        <td className="text-right py-4 px-4 text-gray-100">{formatCurrency(holding.avg_buy_price)}</td>
+                        <td className="text-right py-4 px-4 font-medium text-gray-100">{formatCurrency(holding.current_price)}</td>
+                        <td className="text-right py-4 px-4 text-gray-100">{formatCurrency(holding.invested_amount)}</td>
+                        <td className="text-right py-4 px-4 font-medium text-gray-100">{formatCurrency(holding.current_value)}</td>
                         <td className={`text-right py-4 px-4 font-bold ${isProfitable ? 'profit' : 'loss'}`}>
                           <div>
                             <p>{isProfitable ? '+' : ''}{formatCurrency(profitLoss)}</p>
@@ -325,7 +325,7 @@ function Portfolio() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-400">
               <Building2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>No investments yet</p>
               <button
@@ -342,11 +342,11 @@ function Portfolio() {
         {/* Demat Modal */}
         {showDematModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">{editingDemat ? 'Edit' : 'Add'} Demat Account</h3>
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingDemat ? 'Edit' : 'Add'} Demat Account</h3>
               <form onSubmit={handleSaveDemat} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Broker Name</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Broker Name</label>
                   <input 
                     type="text" 
                     value={dematForm.broker_name} 
@@ -357,7 +357,7 @@ function Portfolio() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Number</label>
                   <input 
                     type="text" 
                     value={dematForm.account_number} 
@@ -378,11 +378,11 @@ function Portfolio() {
         {/* Investment Modal */}
         {showInvestmentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">{editingInvestment ? 'Edit' : 'Add'} Investment</h3>
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingInvestment ? 'Edit' : 'Add'} Investment</h3>
               <form onSubmit={handleSaveInvestment} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Demat Account</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Demat Account</label>
                   <select 
                     value={investmentForm.demat_account_id} 
                     onChange={(e) => setInvestmentForm({...investmentForm, demat_account_id: e.target.value})} 
@@ -396,7 +396,7 @@ function Portfolio() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Symbol</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Stock Symbol</label>
                   <input 
                     type="text" 
                     value={investmentForm.stock_symbol} 
@@ -407,7 +407,7 @@ function Portfolio() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Name</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Stock Name</label>
                   <input 
                     type="text" 
                     value={investmentForm.stock_name} 
@@ -428,7 +428,7 @@ function Portfolio() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                    <label className="block text-sm font-medium text-gray-200 mb-1">Quantity</label>
                     <input 
                       type="number" 
                       step="0.01"
@@ -439,7 +439,7 @@ function Portfolio() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Buy Price</label>
+                    <label className="block text-sm font-medium text-gray-200 mb-1">Buy Price</label>
                     <input 
                       type="number" 
                       step="0.01"
@@ -451,7 +451,7 @@ function Portfolio() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Buy Date</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Buy Date</label>
                   <input 
                     type="date" 
                     value={investmentForm.buy_date} 
@@ -472,11 +472,11 @@ function Portfolio() {
         {/* Stock Search Overlay */}
         {showStockSearch && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-4 w-full max-w-3xl shadow-lg">
+            <div className="bg-gray-800 rounded-lg p-4 w-full max-w-3xl shadow-lg">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-lg font-bold text-gray-800">Search Stocks</h4>
-                <button onClick={() => setShowStockSearch(false)} className="p-1 hover:bg-gray-100 rounded">
-                  <X className="w-5 h-5 text-gray-600" />
+                <h4 className="text-lg font-bold text-gray-100">Search Stocks</h4>
+                <button onClick={() => setShowStockSearch(false)} className="p-1 hover:bg-gray-700 rounded">
+                  <X className="w-5 h-5 text-gray-300" />
                 </button>
               </div>
               <StockSearch onSelect={handleStockSelected} onClose={() => setShowStockSearch(false)} showPrice={true} />

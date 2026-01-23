@@ -49,29 +49,29 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+      <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
             <DollarSign className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-gray-100 mb-2">
             Finance Tracker
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-300">
             Your personal expense & investment manager
           </p>
         </div>
 
         {/* Toggle Login/Register */}
-        <div className="flex border-b border-gray-200 mb-6">
+        <div className="flex border-b border-gray-700 mb-6">
           <button
             type="button"
             className={`flex-1 py-3 text-center font-medium transition-colors ${
               isLogin
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'border-b-2 border-blue-500 text-blue-400'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
             onClick={() => {
               setIsLogin(true);
@@ -85,8 +85,8 @@ function Login() {
             type="button"
             className={`flex-1 py-3 text-center font-medium transition-colors ${
               !isLogin
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'border-b-2 border-blue-500 text-blue-400'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
             onClick={() => {
               setIsLogin(false);
@@ -100,7 +100,7 @@ function Login() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800 text-red-400 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -109,7 +109,7 @@ function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Full Name
               </label>
               <input
@@ -125,7 +125,7 @@ function Login() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Email
             </label>
             <input
@@ -140,7 +140,7 @@ function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Password
             </label>
             <input
@@ -157,7 +157,7 @@ function Login() {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Preferred Currency
               </label>
               <select
@@ -194,14 +194,14 @@ function Login() {
         </form>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-gray-300">
           {isLogin ? (
             <p>
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => setIsLogin(false)}
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-blue-400 hover:text-blue-300 font-medium"
               >
                 Register here
               </button>
@@ -212,7 +212,7 @@ function Login() {
               <button
                 type="button"
                 onClick={() => setIsLogin(true)}
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-blue-400 hover:text-blue-300 font-medium"
               >
                 Login here
               </button>

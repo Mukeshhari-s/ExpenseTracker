@@ -43,31 +43,58 @@ function Dashboard() {
     try {
       setLoading(true);
 
-      // Fetch monthly summary
-      const monthlyData = await transactionAPI.getMonthlySummary();
-      
-      // Fetch bank summary
-      const bankData = await bankAPI.getSummary();
-      
-      // Fetch portfolio summary
-      const portfolioData = await investmentAPI.getPortfolioSummary();
-      
-      // Fetch recent transactions
-      const transactionsData = await transactionAPI.getAll({ limit: 5 });
+      console.log('Fetching dashboard data...');
 
-      setSummary({
-        monthlyExpenses: monthlyData.data.total_expenses || 0,
-        monthlyIncome: monthlyData.data.total_income || 0,
-        netSavings: monthlyData.data.net_savings || 0,
-        totalBalance: bankData.data.total_balance || 0,
-        portfolioValue: portfolioData.data.current_value || 0,
-        portfolioProfit: portfolioData.data.total_profit_loss || 0,
-        portfolioProfitPercent: portfolioData.data.profit_loss_percentage || 0,
+      // Fetch monthly summary
+      console.log('Fetching monthly summary...');
+      const monthlyData = await transactionAPI.getMonthlySummary();
+      console.log('Monthly Data Response:', monthlyData);
+
+      // Fetch bank summary
+      console.log('Fetching bank summary...');
+      const bankData = await bankAPI.getSummary();
+      console.log('Bank Data Response:', bankData);
+
+      // Fetch portfolio summary
+      console.log('Fetching portfolio summary...');
+      const portfolioData = await investmentAPI.getPortfolioSummary();
+      console.log('Portfolio Data Response:', portfolioData);
+
+      // Fetch recent transactions
+      console.log('Fetching recent transactions...');
+      const transactionsData = await transactionAPI.getAll({ limit: 5 });
+      console.log('Transactions Data Response:', transactionsData);
+
+      const monthly = monthlyData.data || {};
+      const bank = bankData.data || {};
+      const portfolio = portfolioData.data || {};
+      const transactions = transactionsData.data || {};
+
+      console.log('Extracted values:', {
+        monthlyExpenses: monthly.total_expenses,
+        monthlyIncome: monthly.total_income,
+        netSavings: monthly.net_savings,
+        totalBalance: bank.totalBalance,
+        portfolioValue: portfolio.current_value,
+        portfolioProfit: portfolio.total_profit_loss,
+        portfolioProfitPercent: portfolio.profit_loss_percentage,
       });
 
-      setRecentTransactions(transactionsData.data.transactions || []);
+      setSummary({
+        monthlyExpenses: monthly.total_expenses || 0,
+        monthlyIncome: monthly.total_income || 0,
+        netSavings: monthly.net_savings || 0,
+        totalBalance: bank.totalBalance || 0,
+        portfolioValue: portfolio.current_value || 0,
+        portfolioProfit: portfolio.total_profit_loss || 0,
+        portfolioProfitPercent: portfolio.profit_loss_percentage || 0,
+      });
+
+      setRecentTransactions(transactions.transactions || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      alert('Error loading dashboard: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -120,10 +147,10 @@ function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-100">
               Welcome back, {user?.name}!
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-300 mt-1">
               Here's your financial overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -142,13 +169,13 @@ function Dashboard() {
           {/* Monthly Expenses */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600 font-medium">Monthly Expenses</span>
+              <span className="text-gray-300 font-medium">Monthly Expenses</span>
               <ArrowDownCircle className="w-6 h-6 text-red-500" />
             </div>
-            <div className="text-3xl font-bold text-gray-800">
+            <div className="text-3xl font-bold text-gray-100">
               {formatCurrency(summary.monthlyExpenses)}
             </div>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-400 mt-2">
               Income: {formatCurrency(summary.monthlyIncome)}
             </p>
           </div>
@@ -156,13 +183,13 @@ function Dashboard() {
           {/* Net Savings */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600 font-medium">Net Savings</span>
-              <Wallet className="w-6 h-6 text-primary-600" />
+              <span className="text-gray-300 font-medium">Net Savings</span>
+              <Wallet className="w-6 h-6 text-blue-400" />
             </div>
             <div className={`text-3xl font-bold ${summary.netSavings >= 0 ? 'profit' : 'loss'}`}>
               {formatCurrency(summary.netSavings)}
             </div>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-400 mt-2">
               This month
             </p>
           </div>
@@ -170,13 +197,13 @@ function Dashboard() {
           {/* Total Bank Balance */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600 font-medium">Bank Balance</span>
+              <span className="text-gray-300 font-medium">Bank Balance</span>
               <PieChart className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="text-3xl font-bold text-gray-800">
+            <div className="text-3xl font-bold text-gray-100">
               {formatCurrency(summary.totalBalance)}
             </div>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-400 mt-2">
               Across all accounts
             </p>
           </div>
@@ -184,10 +211,10 @@ function Dashboard() {
           {/* Portfolio Value */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600 font-medium">Portfolio Value</span>
+              <span className="text-gray-300 font-medium">Portfolio Value</span>
               <TrendingUp className={`w-6 h-6 ${summary.portfolioProfit >= 0 ? 'text-green-500' : 'text-red-500'}`} />
             </div>
-            <div className="text-3xl font-bold text-gray-800">
+            <div className="text-3xl font-bold text-gray-100">
               {formatCurrency(summary.portfolioValue)}
             </div>
             <p className={`text-sm mt-2 ${summary.portfolioProfit >= 0 ? 'profit' : 'loss'}`}>
@@ -199,10 +226,10 @@ function Dashboard() {
         {/* Recent Transactions */}
         <div className="card">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Recent Transactions</h2>
+            <h2 className="text-2xl font-bold text-gray-100">Recent Transactions</h2>
             <button
               onClick={() => navigate('/banks')}
-              className="text-primary-600 hover:text-primary-700 font-medium"
+              className="text-blue-400 hover:text-blue-300 font-medium">
             >
               View All →
             </button>
@@ -213,11 +240,11 @@ function Dashboard() {
               {recentTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                      transaction.type === 'income' ? 'bg-green-900' : 'bg-red-100'
                     }`}>
                       {transaction.type === 'income' ? (
                         <ArrowUpCircle className="w-6 h-6 text-green-600" />
@@ -226,10 +253,10 @@ function Dashboard() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">
+                      <p className="font-medium text-gray-100">
                         {transaction.category || transaction.source || transaction.type}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-300">
                         {transaction.bank_name} • {formatDate(transaction.date)}
                       </p>
                     </div>
@@ -243,7 +270,7 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-400">
               <PieChart className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>No transactions yet</p>
               <button
@@ -263,12 +290,12 @@ function Dashboard() {
             className="card hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-primary-600" />
+              <div className="w-12 h-12 bg-blue-900 rounded-lg flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-blue-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">Manage Banks</h3>
-                <p className="text-gray-600">Add transactions and view expenses</p>
+                <h3 className="text-lg font-bold text-gray-100">Manage Banks</h3>
+                <p className="text-gray-300">Add transactions and view expenses</p>
               </div>
             </div>
           </button>
@@ -278,12 +305,12 @@ function Dashboard() {
             className="card hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">View Portfolio</h3>
-                <p className="text-gray-600">Track investments and profits</p>
+                <h3 className="text-lg font-bold text-gray-100">View Portfolio</h3>
+                <p className="text-gray-300">Track investments and profits</p>
               </div>
             </div>
           </button>

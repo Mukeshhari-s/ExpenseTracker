@@ -12,10 +12,12 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+// Specific routes must come before :id routes
+router.get('/summary', getAccountSummary);
+
 router.get('/', getBankAccounts);
 router.post('/', addBankAccount);
 router.put('/:id', updateBankAccount);
 router.delete('/:id', deleteBankAccount);
-router.get('/summary', getAccountSummary);
 
 export default router;

@@ -197,12 +197,12 @@ function BankManagement() {
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Bank Accounts & Transactions</h1>
+        <h1 className="text-3xl font-bold text-gray-100 mb-8">Bank Accounts & Transactions</h1>
 
         {/* Bank Accounts Section */}
         <div className="card mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Your Bank Accounts</h2>
+            <h2 className="text-2xl font-bold text-gray-100">Your Bank Accounts</h2>
             <button onClick={handleAddBank} className="btn-primary flex items-center space-x-2">
               <Plus className="w-5 h-5" />
               <span>Add Bank</span>
@@ -212,7 +212,7 @@ function BankManagement() {
           {banks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {banks.map((bank) => (
-                <div key={bank.id} className="bg-gradient-to-br from-primary-500 to-primary-700 text-white p-6 rounded-lg shadow-md">
+                <div key={bank.id} className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-6 rounded-lg shadow-md">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <p className="text-sm opacity-90">{bank.account_type}</p>
@@ -233,14 +233,14 @@ function BankManagement() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">No bank accounts yet. Add one to get started!</p>
+            <p className="text-center text-gray-400 py-8">No bank accounts yet. Add one to get started!</p>
           )}
         </div>
 
         {/* Transactions Section */}
         <div className="card">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Transactions</h2>
+            <h2 className="text-2xl font-bold text-gray-100">Transactions</h2>
             <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2" disabled={banks.length === 0}>
               <Plus className="w-5 h-5" />
               <span>Add Transaction</span>
@@ -272,10 +272,10 @@ function BankManagement() {
           {transactions.length > 0 ? (
             <div className="space-y-3">
               {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-700">
                   <div className="flex items-center space-x-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                      transaction.type === 'income' ? 'bg-green-900/20' : 'bg-red-900/20'
                     }`}>
                       {transaction.type === 'income' ? (
                         <ArrowUpCircle className="w-6 h-6 text-green-600" />
@@ -284,21 +284,21 @@ function BankManagement() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">
+                      <p className="font-medium text-gray-100">
                         {transaction.category || transaction.source || transaction.type}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-300">
                         {transaction.bank_name} • {formatDate(transaction.date)}
                       </p>
-                      {transaction.notes && <p className="text-xs text-gray-500 mt-1">{transaction.notes}</p>}
+                      {transaction.notes && <p className="text-xs text-gray-400 mt-1">{transaction.notes}</p>}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className={`text-lg font-bold ${transaction.type === 'income' ? 'profit' : 'loss'}`}>
                       {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </div>
-                    <button onClick={() => handleEditTransaction(transaction)} className="p-2 hover:bg-gray-200 rounded">
-                      <Edit2 className="w-4 h-4 text-gray-600" />
+                    <button onClick={() => handleEditTransaction(transaction)} className="p-2 hover:bg-gray-700 rounded">
+                      <Edit2 className="w-4 h-4 text-gray-300" />
                     </button>
                     <button onClick={() => handleDeleteTransaction(transaction.id)} className="p-2 hover:bg-red-100 rounded">
                       <Trash2 className="w-4 h-4 text-red-600" />
@@ -308,26 +308,26 @@ function BankManagement() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">No transactions found</p>
+            <p className="text-center text-gray-400 py-8">No transactions found</p>
           )}
         </div>
 
         {/* Bank Modal */}
         {showBankModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
               <form onSubmit={handleSaveBank} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Bank Name</label>
                   <input type="text" value={bankForm.bank_name} onChange={(e) => setBankForm({...bankForm, bank_name: e.target.value})} className="input-field" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Number</label>
                   <input type="text" value={bankForm.account_number} onChange={(e) => setBankForm({...bankForm, account_number: e.target.value})} className="input-field" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Type</label>
                   <select value={bankForm.account_type} onChange={(e) => setBankForm({...bankForm, account_type: e.target.value})} className="input-field">
                     <option value="Savings">Savings</option>
                     <option value="Current">Current</option>
@@ -335,7 +335,7 @@ function BankManagement() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Initial Balance</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Initial Balance</label>
                   <input type="number" step="0.01" value={bankForm.balance} onChange={(e) => setBankForm({...bankForm, balance: parseFloat(e.target.value) || 0})} className="input-field" />
                 </div>
                 <div className="flex space-x-3">
@@ -350,11 +350,11 @@ function BankManagement() {
         {/* Transaction Modal */}
         {showTransactionModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
               <form onSubmit={handleSaveTransaction} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Bank Account</label>
                   <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field" required>
                     <option value="">Select Bank</option>
                     {banks.map((bank) => (
@@ -363,33 +363,33 @@ function BankManagement() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
                   <select value={transactionForm.type} onChange={(e) => setTransactionForm({...transactionForm, type: e.target.value})} className="input-field" required>
                     <option value="expense">Expense</option>
                     <option value="income">Income</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Amount</label>
                   <input type="number" step="0.01" value={transactionForm.amount} onChange={(e) => setTransactionForm({...transactionForm, amount: e.target.value})} className="input-field" required />
                 </div>
                 {transactionForm.type === 'expense' ? (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-gray-200 mb-1">Category</label>
                     <input type="text" value={transactionForm.category} onChange={(e) => setTransactionForm({...transactionForm, category: e.target.value})} className="input-field" placeholder="e.g., Food, Transport, Entertainment" />
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                    <label className="block text-sm font-medium text-gray-200 mb-1">Source</label>
                     <input type="text" value={transactionForm.source} onChange={(e) => setTransactionForm({...transactionForm, source: e.target.value})} className="input-field" placeholder="e.g., Salary, Freelance" />
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Date</label>
                   <input type="date" value={transactionForm.date} onChange={(e) => setTransactionForm({...transactionForm, date: e.target.value})} className="input-field" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">Notes (Optional)</label>
                   <textarea value={transactionForm.notes} onChange={(e) => setTransactionForm({...transactionForm, notes: e.target.value})} className="input-field" rows="2"></textarea>
                 </div>
                 <div className="flex space-x-3">

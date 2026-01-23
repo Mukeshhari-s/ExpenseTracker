@@ -143,14 +143,14 @@ function Profile() {
     <>
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Profile & Settings</h1>
+        <h1 className="text-3xl font-bold text-gray-100 mb-8">Profile & Settings</h1>
 
         {/* Message */}
         {message.text && (
           <div className={`mb-6 p-4 rounded-lg ${
             message.type === 'success' 
-              ? 'bg-green-50 border border-green-200 text-green-700' 
-              : 'bg-red-50 border border-red-200 text-red-700'
+              ? 'bg-green-900/20 border border-green-200 text-green-700' 
+              : 'bg-red-900/20 border border-red-200 text-red-700'
           }`}>
             {message.text}
           </div>
@@ -158,7 +158,7 @@ function Profile() {
 
         {/* Profile Photo Section */}
         <div className="card mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Profile Photo</h2>
+          <h2 className="text-xl font-bold text-gray-100 mb-6">Profile Photo</h2>
           
           <div className="flex items-center space-x-6">
             <div className="relative">
@@ -166,17 +166,17 @@ function Profile() {
                 <img
                   src={`http://localhost:5000${currentUser.profile_photo}`}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-primary-200"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-blue-600"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-primary-100 flex items-center justify-center border-4 border-primary-200">
-                  <User className="w-16 h-16 text-primary-600" />
+                <div className="w-32 h-32 rounded-full bg-blue-900/20 flex items-center justify-center border-4 border-blue-600">
+                  <User className="w-16 h-16 text-blue-600" />
                 </div>
               )}
               
               <label 
                 htmlFor="photo-upload" 
-                className="absolute bottom-0 right-0 w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors shadow-lg"
+                className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-lg"
               >
                 <Camera className="w-5 h-5 text-white" />
               </label>
@@ -192,9 +192,9 @@ function Profile() {
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">{currentUser?.name}</h3>
-              <p className="text-gray-600">{currentUser?.email}</p>
-              <p className="text-sm text-gray-500 mt-2">
+              <h3 className="text-lg font-semibold text-gray-100">{currentUser?.name}</h3>
+              <p className="text-gray-300">{currentUser?.email}</p>
+              <p className="text-sm text-gray-400 mt-2">
                 {uploadingPhoto ? 'Uploading...' : 'Click the camera icon to change photo'}
               </p>
             </div>
@@ -203,12 +203,12 @@ function Profile() {
 
         {/* Profile Information Form */}
         <div className="card mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Personal Information</h2>
+          <h2 className="text-xl font-bold text-gray-100 mb-6">Personal Information</h2>
           
           <form onSubmit={handleUpdateProfile} className="space-y-6">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 <div className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
                   <span>Full Name</span>
@@ -226,7 +226,7 @@ function Profile() {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4" />
                   <span>Email</span>
@@ -244,7 +244,7 @@ function Profile() {
 
             {/* Currency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-4 h-4" />
                   <span>Preferred Currency</span>
@@ -264,16 +264,16 @@ function Profile() {
               </select>
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Change Password</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="border-t border-gray-700 pt-6">
+              <h3 className="text-lg font-semibold text-gray-100 mb-4">Change Password</h3>
+              <p className="text-sm text-gray-300 mb-4">
                 Leave blank if you don't want to change your password
               </p>
 
               <div className="space-y-4">
                 {/* Current Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-200 mb-2">
                     <div className="flex items-center space-x-2">
                       <Lock className="w-4 h-4" />
                       <span>Current Password</span>
@@ -291,7 +291,7 @@ function Profile() {
 
                 {/* New Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-200 mb-2">
                     New Password
                   </label>
                   <input
@@ -307,7 +307,7 @@ function Profile() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-200 mb-2">
                     Confirm New Password
                   </label>
                   <input
@@ -338,7 +338,7 @@ function Profile() {
         {/* Danger Zone */}
         <div className="card border-2 border-red-200">
           <h2 className="text-xl font-bold text-red-700 mb-4">Danger Zone</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-300 mb-4">
             Once you logout, you'll need to login again with your credentials.
           </p>
           <button
