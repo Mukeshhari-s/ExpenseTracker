@@ -178,55 +178,55 @@ function Portfolio() {
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-100">Investment Portfolio</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Investment Portfolio</h1>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="btn-secondary flex items-center space-x-2"
+            className="btn-secondary flex items-center space-x-2 whitespace-nowrap"
           >
             <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh Prices</span>
+            <span className="hidden sm:inline">Refresh Prices</span>
           </button>
         </div>
 
         {/* Demat Accounts */}
         <div className="card mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">Demat Accounts</h2>
-            <button onClick={handleAddDemat} className="btn-primary flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Demat Accounts</h2>
+            <button onClick={handleAddDemat} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Demat Account</span>
             </button>
           </div>
 
           {dematAccounts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {dematAccounts.map((demat) => (
-                <div key={demat.id} className="bg-gradient-to-br from-green-500 to-green-700 text-white p-6 rounded-lg shadow-md">
+                <div key={demat.id} className="bg-gradient-to-br from-green-500 to-green-700 text-white p-4 sm:p-6 rounded-lg shadow-md">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="text-sm opacity-90">Demat Account</p>
-                      <h3 className="text-xl font-bold">{demat.broker_name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm opacity-90 truncate">Demat Account</p>
+                      <h3 className="text-lg sm:text-xl font-bold truncate">{demat.broker_name}</h3>
                     </div>
-                    <button onClick={() => handleDeleteDemat(demat.id)} className="p-1 hover:bg-white/20 rounded">
+                    <button onClick={() => handleDeleteDemat(demat.id)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded ml-2 flex-shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="text-sm opacity-90">****{demat.account_number.slice(-4)}</p>
+                  <p className="text-xs sm:text-sm opacity-90 truncate">****{demat.account_number.slice(-4)}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-400 py-8">No demat accounts yet. Add one to start investing!</p>
+            <p className="text-center text-gray-400 py-8 text-sm">No demat accounts yet. Add one to start investing!</p>
           )}
         </div>
 
         {/* Portfolio Summary - Angel One Inspired */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-8 mb-8 shadow-xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-4 sm:p-8 mb-8 shadow-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
             <div>
               <p className="text-sm opacity-90 mb-1">Total Invested</p>
               <p className="text-3xl font-bold">{formatCurrency(portfolio?.total_invested || 0)}</p>

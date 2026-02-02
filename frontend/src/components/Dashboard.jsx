@@ -145,22 +145,22 @@ function Dashboard() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-100">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">
               Welcome back, {user?.name}!
             </h1>
-            <p className="text-gray-300 mt-1">
+            <p className="text-gray-300 mt-1 text-sm sm:text-base">
               Here's your financial overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="btn-secondary flex items-center space-x-2"
+            className="btn-secondary flex items-center space-x-2 whitespace-nowrap"
           >
             <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
 
@@ -169,13 +169,13 @@ function Dashboard() {
           {/* Monthly Expenses */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-300 font-medium">Monthly Expenses</span>
-              <ArrowDownCircle className="w-6 h-6 text-red-500" />
+              <span className="text-gray-300 font-medium text-xs sm:text-sm">Monthly Expenses</span>
+              <ArrowDownCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" />
             </div>
-            <div className="text-3xl font-bold text-gray-100">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-100 truncate">
               {formatCurrency(summary.monthlyExpenses)}
             </div>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-xs sm:text-sm text-gray-400 mt-2">
               Income: {formatCurrency(summary.monthlyIncome)}
             </p>
           </div>
@@ -183,13 +183,13 @@ function Dashboard() {
           {/* Net Savings */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-300 font-medium">Net Savings</span>
-              <Wallet className="w-6 h-6 text-blue-400" />
+              <span className="text-gray-300 font-medium text-xs sm:text-sm">Net Savings</span>
+              <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
             </div>
-            <div className={`text-3xl font-bold ${summary.netSavings >= 0 ? 'profit' : 'loss'}`}>
+            <div className={`text-2xl sm:text-3xl font-bold ${summary.netSavings >= 0 ? 'profit' : 'loss'} truncate`}>
               {formatCurrency(summary.netSavings)}
             </div>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-xs sm:text-sm text-gray-400 mt-2">
               This month
             </p>
           </div>

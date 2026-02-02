@@ -196,52 +196,52 @@ function BankManagement() {
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-100 mb-8">Bank Accounts & Transactions</h1>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-6 sm:mb-8">Bank Accounts & Transactions</h1>
 
         {/* Bank Accounts Section */}
         <div className="card mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">Your Bank Accounts</h2>
-            <button onClick={handleAddBank} className="btn-primary flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Your Bank Accounts</h2>
+            <button onClick={handleAddBank} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Bank</span>
             </button>
           </div>
 
           {banks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {banks.map((bank) => (
-                <div key={bank.id} className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-6 rounded-lg shadow-md">
+                <div key={bank.id} className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-4 sm:p-6 rounded-lg shadow-md">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="text-sm opacity-90">{bank.account_type}</p>
-                      <h3 className="text-xl font-bold">{bank.bank_name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm opacity-90 truncate">{bank.account_type}</p>
+                      <h3 className="text-lg sm:text-xl font-bold truncate">{bank.bank_name}</h3>
                     </div>
-                    <div className="flex space-x-2">
-                      <button onClick={() => handleEditBank(bank)} className="p-1 hover:bg-white/20 rounded">
+                    <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
+                      <button onClick={() => handleEditBank(bank)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDeleteBank(bank.id)} className="p-1 hover:bg-white/20 rounded">
+                      <button onClick={() => handleDeleteBank(bank.id)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm opacity-90 mb-2">****{bank.account_number.slice(-4)}</p>
-                  <p className="text-3xl font-bold">{formatCurrency(bank.balance)}</p>
+                  <p className="text-xs sm:text-sm opacity-90 mb-2 truncate">****{bank.account_number.slice(-4)}</p>
+                  <p className="text-2xl sm:text-3xl font-bold truncate">{formatCurrency(bank.balance)}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-400 py-8">No bank accounts yet. Add one to get started!</p>
+            <p className="text-center text-gray-400 py-8 text-sm">No bank accounts yet. Add one to get started!</p>
           )}
         </div>
 
         {/* Transactions Section */}
         <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">Transactions</h2>
-            <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2" disabled={banks.length === 0}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Transactions</h2>
+            <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center" disabled={banks.length === 0}>
               <Plus className="w-5 h-5" />
               <span>Add Transaction</span>
             </button>

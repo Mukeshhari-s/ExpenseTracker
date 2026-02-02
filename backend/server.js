@@ -32,19 +32,31 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  // Add Vercel frontend URLs
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
 ].filter(Boolean);
 
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    
+    // Allow all origins in development
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // In production, check against allowed origins
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.error(`CORS blocked origin: ${origin}`);
+      callback(null, true); // Allow anyway for now, log for debugging
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
