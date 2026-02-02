@@ -230,7 +230,6 @@ function Dashboard() {
             <button
               onClick={() => navigate('/banks')}
               className="text-blue-400 hover:text-blue-300 font-medium">
-            >
               View All →
             </button>
           </div>
