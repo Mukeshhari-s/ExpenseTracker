@@ -32,6 +32,8 @@ ChartJS.register(
 function Profile() {
   const navigate = useNavigate();
   const currentUser = getUser();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiRootUrl = apiBaseUrl.replace(/\/api\/?$/, '');
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -266,12 +268,12 @@ function Profile() {
 
     try {
       const formData = new FormData();
-      formData.append('profile_photo', file);
+      formData.append('profilePhoto', file);
 
       const response = await profileAPI.uploadPhoto(formData);
       
       // Update user with new photo
-      const updatedUser = { ...currentUser, profile_photo: response.data.profile_photo };
+      const updatedUser = { ...currentUser, profilePhoto: response.data.profilePhoto };
       setUser(updatedUser);
       
       setMessage({ type: 'success', text: 'Profile photo updated successfully!' });
@@ -318,9 +320,9 @@ function Profile() {
           
           <div className="flex items-center space-x-6">
             <div className="relative">
-              {currentUser?.profile_photo ? (
+              {currentUser?.profilePhoto ? (
                 <img
-                  src={`http://localhost:5000${currentUser.profile_photo}`}
+                  src={`${apiRootUrl}${currentUser.profilePhoto}`}
                   alt="Profile"
                   className="w-32 h-32 rounded-full object-cover border-4 border-blue-600"
                 />

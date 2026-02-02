@@ -36,7 +36,7 @@ function BankManagement() {
   });
 
   const [transactionForm, setTransactionForm] = useState({
-    bank_account_id: '',
+    bank_account_id: 'cash',
     type: 'expense',
     amount: '',
     category: '',
@@ -119,7 +119,7 @@ function BankManagement() {
 
   const handleAddTransaction = () => {
     setTransactionForm({
-      bank_account_id: banks[0]?.id || '',
+      bank_account_id: 'cash',
       type: 'expense',
       amount: '',
       category: '',
@@ -133,7 +133,7 @@ function BankManagement() {
 
   const handleEditTransaction = (transaction) => {
     setTransactionForm({
-      bank_account_id: transaction.bank_account_id,
+      bank_account_id: transaction.bank_account_id || 'cash',
       type: transaction.type,
       amount: transaction.amount,
       category: transaction.category || '',
@@ -148,10 +148,14 @@ function BankManagement() {
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...transactionForm,
+        bank_account_id: transactionForm.bank_account_id === 'cash' ? null : transactionForm.bank_account_id,
+      };
       if (editingTransaction) {
-        await transactionAPI.update(editingTransaction.id, transactionForm);
+        await transactionAPI.update(editingTransaction.id, payload);
       } else {
-        await transactionAPI.add(transactionForm);
+        await transactionAPI.add(payload);
       }
       setShowTransactionModal(false);
       fetchData();
@@ -242,31 +246,10 @@ function BankManagement() {
         <div className="card">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Transactions</h2>
-            <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center" disabled={banks.length === 0}>
+            <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Transaction</span>
             </button>
-          </div>
-
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <select value={filters.type} onChange={(e) => setFilters({...filters, type: e.target.value})} className="input-field">
-              <option value="">All Types</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-            <select value={filters.bank_account_id} onChange={(e) => setFilters({...filters, bank_account_id: e.target.value})} className="input-field">
-              <option value="">All Banks</option>
-              {banks.map((bank) => (
-                <option key={bank.id} value={bank.id}>{bank.bank_name}</option>
-              ))}
-            </select>
-            <select value={filters.category} onChange={(e) => setFilters({...filters, category: e.target.value})} className="input-field">
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
           </div>
 
           {/* Transaction List */}
@@ -356,8 +339,8 @@ function BankManagement() {
               <form onSubmit={handleSaveTransaction} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Bank Account</label>
-                  <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field" required>
-                    <option value="">Select Bank</option>
+                  <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field">
+                    <option value="cash">Cash (Default)</option>
                     {banks.map((bank) => (
                       <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
                     ))}

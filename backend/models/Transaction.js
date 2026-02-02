@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema(
     bankAccountId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'BankAccount',
-      required: [true, 'Please add a bank account ID'],
+      required: false,
     },
     type: {
       type: String,

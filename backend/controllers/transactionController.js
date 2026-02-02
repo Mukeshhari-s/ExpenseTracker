@@ -11,7 +11,13 @@ export const getTransactions = async (req, res) => {
     let query = { userId: req.user.userId };
 
     if (type) query.type = type;
-    if (bankAccountId) query.bankAccountId = bankAccountId;
+    if (bankAccountId) {
+      if (bankAccountId === 'cash') {
+        query.bankAccountId = null;
+      } else {
+        query.bankAccountId = bankAccountId;
+      }
+    }
     if (category) query.category = category;
     
     if (startDate || endDate) {
@@ -34,9 +40,9 @@ export const getTransactions = async (req, res) => {
     // Normalize response for frontend expectations
     const normalized = transactions.map((tx) => ({
       id: tx._id,
-      bank_account_id: tx.bankAccountId?._id,
-      bank_name: tx.bankAccountId?.bankName,
-      bank_account_type: tx.bankAccountId?.accountType,
+      bank_account_id: tx.bankAccountId?._id || null,
+      bank_name: tx.bankAccountId?.bankName || 'Cash',
+      bank_account_type: tx.bankAccountId?.accountType || 'Cash',
       type: tx.type,
       amount: tx.amount,
       category: tx.category,
@@ -56,7 +62,8 @@ export const getTransactions = async (req, res) => {
 export const addTransaction = async (req, res) => {
   try {
     // Accept camelCase or snake_case
-    const bankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const rawBankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const bankAccountId = rawBankAccountId && rawBankAccountId !== 'cash' ? rawBankAccountId : null;
     const type = req.body.type;
     const amount = Number(req.body.amount);
     const category = req.body.category;
@@ -64,9 +71,9 @@ export const addTransaction = async (req, res) => {
     const notes = req.body.notes;
     const date = req.body.date;
 
-    if (!bankAccountId || !type || Number.isNaN(amount) || !date) {
+    if (!type || Number.isNaN(amount) || !date) {
       return res.status(400).json({ 
-        error: 'Please provide bankAccountId, type, amount, and date' 
+        error: 'Please provide type, amount, and date' 
       });
     }
 
@@ -74,14 +81,16 @@ export const addTransaction = async (req, res) => {
       return res.status(400).json({ error: 'Type must be either income or expense' });
     }
 
-    // Verify bank account belongs to user
-    const bankAccount = await BankAccount.findOne({ 
-      _id: bankAccountId, 
-      userId: req.user.userId 
-    });
+    if (bankAccountId) {
+      // Verify bank account belongs to user
+      const bankAccount = await BankAccount.findOne({ 
+        _id: bankAccountId, 
+        userId: req.user.userId 
+      });
 
-    if (!bankAccount) {
-      return res.status(404).json({ error: 'Bank account not found' });
+      if (!bankAccount) {
+        return res.status(404).json({ error: 'Bank account not found' });
+      }
     }
 
     const transaction = await Transaction.create({
@@ -95,12 +104,14 @@ export const addTransaction = async (req, res) => {
       date: new Date(date)
     });
 
-    // Update bank account balance
-    const balanceChange = type === 'income' ? amount : -amount;
-    await BankAccount.findByIdAndUpdate(
-      bankAccountId,
-      { $inc: { balance: balanceChange } }
-    );
+    if (bankAccountId) {
+      // Update bank account balance
+      const balanceChange = type === 'income' ? amount : -amount;
+      await BankAccount.findByIdAndUpdate(
+        bankAccountId,
+        { $inc: { balance: balanceChange } }
+      );
+    }
 
     res.status(201).json({
       message: 'Transaction added successfully',
@@ -125,7 +136,12 @@ export const addTransaction = async (req, res) => {
 export const updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
-    const bankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const hasBankAccountId = Object.prototype.hasOwnProperty.call(req.body, 'bankAccountId') ||
+      Object.prototype.hasOwnProperty.call(req.body, 'bank_account_id');
+    const rawBankAccountId = req.body.bankAccountId || req.body.bank_account_id;
+    const bankAccountId = hasBankAccountId
+      ? (rawBankAccountId && rawBankAccountId !== 'cash' ? rawBankAccountId : null)
+      : undefined;
     const { type, category, source, notes, date } = req.body;
     const amount = req.body.amount !== undefined ? Number(req.body.amount) : undefined;
 
@@ -142,18 +158,20 @@ export const updateTransaction = async (req, res) => {
       return res.status(400).json({ error: 'Amount must be a number' });
     }
 
-    // Revert old balance change
-    const oldBalanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
-    await BankAccount.findByIdAndUpdate(
-      transaction.bankAccountId,
-      { $inc: { balance: oldBalanceChange } }
-    );
+    if (transaction.bankAccountId) {
+      // Revert old balance change
+      const oldBalanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
+      await BankAccount.findByIdAndUpdate(
+        transaction.bankAccountId,
+        { $inc: { balance: oldBalanceChange } }
+      );
+    }
 
     // Update transaction
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       id,
       {
-        bankAccountId: bankAccountId || transaction.bankAccountId,
+        bankAccountId: bankAccountId === undefined ? transaction.bankAccountId : bankAccountId,
         type: type || transaction.type,
         amount: amount !== undefined ? amount : transaction.amount,
         category: category !== undefined ? category : transaction.category,
@@ -164,12 +182,14 @@ export const updateTransaction = async (req, res) => {
       { new: true }
     );
 
-    // Apply new balance change
-    const newBalanceChange = updatedTransaction.type === 'income' ? updatedTransaction.amount : -updatedTransaction.amount;
-    await BankAccount.findByIdAndUpdate(
-      updatedTransaction.bankAccountId,
-      { $inc: { balance: newBalanceChange } }
-    );
+    if (updatedTransaction.bankAccountId) {
+      // Apply new balance change
+      const newBalanceChange = updatedTransaction.type === 'income' ? updatedTransaction.amount : -updatedTransaction.amount;
+      await BankAccount.findByIdAndUpdate(
+        updatedTransaction.bankAccountId,
+        { $inc: { balance: newBalanceChange } }
+      );
+    }
 
     res.json({
       message: 'Transaction updated successfully',
@@ -204,12 +224,14 @@ export const deleteTransaction = async (req, res) => {
       return res.status(404).json({ error: 'Transaction not found' });
     }
 
-    // Revert balance change
-    const balanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
-    await BankAccount.findByIdAndUpdate(
-      transaction.bankAccountId,
-      { $inc: { balance: balanceChange } }
-    );
+    if (transaction.bankAccountId) {
+      // Revert balance change
+      const balanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
+      await BankAccount.findByIdAndUpdate(
+        transaction.bankAccountId,
+        { $inc: { balance: balanceChange } }
+      );
+    }
 
     await Transaction.findByIdAndDelete(id);
 
@@ -255,7 +277,6 @@ export const getMonthlySummary = async (req, res) => {
     // Only include transactions linked to bank accounts
     const userMatch = { 
       userId: userObjectId, 
-      bankAccountId: { $exists: true, $ne: null },
       date: { 
         $gte: startDateObj, 
         $lte: endDateObj
@@ -269,7 +290,7 @@ export const getMonthlySummary = async (req, res) => {
       console.log(`  - Date: ${tx.date.toISOString()}, Type: ${tx.type}, Amount: ${tx.amount}, BankId: ${tx.bankAccountId || 'N/A'}`);
     });
 
-    const filteredTransactions = await Transaction.find({ userId: req.user.userId, bankAccountId: { $exists: true, $ne: null }, date: { $gte: startDateObj, $lte: endDateObj } });
+    const filteredTransactions = await Transaction.find({ userId: req.user.userId, date: { $gte: startDateObj, $lte: endDateObj } });
     console.log(`[MONTHLY SUMMARY] Bank transactions for date range: ${filteredTransactions.length}`);
 
     const [incomeAgg, expenseAgg, expensesByCategory, expensesByBank] = await Promise.all([
@@ -316,7 +337,7 @@ export const getMonthlySummary = async (req, res) => {
       })),
       expenses_by_bank: expensesByBank.map((b) => ({
         bank_account_id: b._id,
-        bank_name: b.bank?.bankName,
+        bank_name: b.bank?.bankName || 'Cash',
         total: b.total,
         count: b.count,
       }))
