@@ -14,7 +14,9 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   RefreshCw,
-  BarChart3
+  BarChart3,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getUser } from '../utils/auth';
 import { Doughnut, Bar } from 'react-chartjs-2';
@@ -58,10 +60,16 @@ function Dashboard() {
 
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [monthlyAnalysis, setMonthlyAnalysis] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // 1-indexed
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    fetchMonthlyAnalysis();
+  }, [selectedMonth, selectedYear]);
 
   const fetchDashboardData = async () => {
     try {
@@ -69,40 +77,23 @@ function Dashboard() {
 
       console.log('Fetching dashboard data...');
 
-      // Fetch monthly summary
-      console.log('Fetching monthly summary...');
+      // Fetch monthly summary for current month (for stats cards)
       const monthlyData = await transactionAPI.getMonthlySummary();
       console.log('Monthly Data Response:', monthlyData);
 
       // Fetch bank summary
-      console.log('Fetching bank summary...');
       const bankData = await bankAPI.getSummary();
-      console.log('Bank Data Response:', bankData);
 
       // Fetch portfolio summary
-      console.log('Fetching portfolio summary...');
       const portfolioData = await investmentAPI.getPortfolioSummary();
-      console.log('Portfolio Data Response:', portfolioData);
 
       // Fetch recent transactions
-      console.log('Fetching recent transactions...');
       const transactionsData = await transactionAPI.getAll({ limit: 5 });
-      console.log('Transactions Data Response:', transactionsData);
 
       const monthly = monthlyData.data || {};
       const bank = bankData.data || {};
       const portfolio = portfolioData.data || {};
       const transactions = transactionsData.data || {};
-
-      console.log('Extracted values:', {
-        monthlyExpenses: monthly.total_expenses,
-        monthlyIncome: monthly.total_income,
-        netSavings: monthly.net_savings,
-        totalBalance: bank.totalBalance,
-        portfolioValue: portfolio.current_value,
-        portfolioProfit: portfolio.total_profit_loss,
-        portfolioProfitPercent: portfolio.profit_loss_percentage,
-      });
 
       setSummary({
         monthlyExpenses: monthly.total_expenses || 0,
@@ -115,16 +106,50 @@ function Dashboard() {
       });
 
       setRecentTransactions(transactions.transactions || []);
-      
-      // Store monthly analysis data for charts
-      setMonthlyAnalysis(monthly);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      console.error('Error details:', error.response?.data || error.message);
       alert('Error loading dashboard: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const fetchMonthlyAnalysis = async () => {
+    try {
+      console.log(`Fetching analysis for ${selectedMonth}/${selectedYear}`);
+      const response = await transactionAPI.getMonthlySummary(selectedMonth, selectedYear);
+      console.log('Monthly Analysis Response:', response.data);
+      setMonthlyAnalysis(response.data || {});
+    } catch (error) {
+      console.error('Error fetching monthly analysis:', error);
+    }
+  };
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    
+    // Don't go beyond current month
+    if (selectedYear === currentYear && selectedMonth === currentMonth) {
+      return;
+    }
+    
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
     }
   };
 
@@ -251,10 +276,49 @@ function Dashboard() {
         </div>
 
         {/* Monthly Expense Analysis */}
-        {monthlyAnalysis && (monthlyAnalysis.expenses_by_category?.length > 0 || monthlyAnalysis.expenses_by_bank?.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Expenses by Category - Doughnut Chart */}
-            {monthlyAnalysis.expenses_by_category && monthlyAnalysis.expenses_by_category.length > 0 && (
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-100 flex items-center space-x-2">
+            <BarChart3 className="w-7 h-7 text-purple-500" />
+            <span>Monthly Analysis</span>
+          </h2>
+          
+          {/* Month Selector */}
+          <div className="flex items-center space-x-3 bg-gray-800 rounded-lg px-4 py-2">
+            <button
+              onClick={handlePreviousMonth}
+              className="text-gray-400 hover:text-gray-100 transition-colors"
+              title="Previous month"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-gray-100 font-semibold min-w-[120px] text-center">
+              {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+            </span>
+            <button
+              onClick={handleNextMonth}
+              className={`transition-colors ${
+                selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() + 1
+                  ? 'text-gray-600 cursor-not-allowed'
+                  : 'text-gray-400 hover:text-gray-100'
+              }`}
+              disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() + 1}
+              title="Next month"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {monthlyAnalysis && (monthlyAnalysis.total_expenses > 0 || monthlyAnalysis.total_income > 0) ? (
+          <div className="space-y-6 mb-8">
+            {/* Category and Bank Charts Grid */}
+            {(monthlyAnalysis.expenses_by_category?.length > 0 || monthlyAnalysis.expenses_by_bank?.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Expenses by Category - Doughnut Chart */}
+                {monthlyAnalysis.expenses_by_category && monthlyAnalysis.expenses_by_category.length > 0 && (
               <div className="card">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
@@ -406,108 +470,114 @@ function Dashboard() {
                 </div>
               </div>
             )}
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Income vs Expense Comparison */}
-        {monthlyAnalysis && (monthlyAnalysis.total_income > 0 || monthlyAnalysis.total_expenses > 0) && (
-          <div className="card mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
-                <TrendingUp className="w-6 h-6 text-blue-500" />
-                <span>Income vs Expenses</span>
-              </h2>
-              <span className="text-sm text-gray-400">
-                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </span>
-            </div>
+            {/* Income vs Expense Comparison */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
+                  <TrendingUp className="w-6 h-6 text-blue-500" />
+                  <span>Income vs Expenses</span>
+                </h2>
+                <span className="text-sm text-gray-400">
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+              </div>
 
-            <div className="h-64 sm:h-72">
-              <Bar
-                data={{
-                  labels: ['Income', 'Expenses', 'Savings'],
-                  datasets: [{
-                    label: 'Amount',
-                    data: [
-                      monthlyAnalysis.total_income || 0,
-                      monthlyAnalysis.total_expenses || 0,
-                      monthlyAnalysis.net_savings || 0
-                    ],
-                    backgroundColor: [
-                      'rgba(34, 197, 94, 0.7)',
-                      'rgba(239, 68, 68, 0.7)',
-                      monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(239, 68, 68, 0.7)'
-                    ],
-                    borderColor: [
-                      'rgba(34, 197, 94, 1)',
-                      'rgba(239, 68, 68, 1)',
-                      monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(239, 68, 68, 1)'
-                    ],
-                    borderWidth: 2,
-                  }]
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: false
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          return `${context.label}: ${formatCurrency(context.parsed.y)}`;
-                        }
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        color: 'rgb(156, 163, 175)',
-                        callback: function(value) {
-                          return formatCurrency(value);
-                        }
-                      },
-                      grid: {
-                        color: 'rgba(75, 85, 99, 0.3)',
-                      }
-                    },
-                    x: {
-                      ticks: {
-                        color: 'rgb(156, 163, 175)',
-                        font: {
-                          size: 14,
-                          weight: 'bold'
-                        }
-                      },
-                      grid: {
+              <div className="h-64 sm:h-72">
+                <Bar
+                  data={{
+                    labels: ['Income', 'Expenses', 'Savings'],
+                    datasets: [{
+                      label: 'Amount',
+                      data: [
+                        monthlyAnalysis.total_income || 0,
+                        monthlyAnalysis.total_expenses || 0,
+                        monthlyAnalysis.net_savings || 0
+                      ],
+                      backgroundColor: [
+                        'rgba(34, 197, 94, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                      ],
+                      borderColor: [
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(239, 68, 68, 1)'
+                      ],
+                      borderWidth: 2,
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
                         display: false
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.label}: ${formatCurrency(context.parsed.y)}`;
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          color: 'rgb(156, 163, 175)',
+                          callback: function(value) {
+                            return formatCurrency(value);
+                          }
+                        },
+                        grid: {
+                          color: 'rgba(75, 85, 99, 0.3)',
+                        }
+                      },
+                      x: {
+                        ticks: {
+                          color: 'rgb(156, 163, 175)',
+                          font: {
+                            size: 14,
+                            weight: 'bold'
+                          }
+                        },
+                        grid: {
+                          display: false
+                        }
                       }
                     }
-                  }
-                }}
-              />
-            </div>
+                  }}
+                />
+              </div>
 
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-1">Income</p>
-                <p className="text-green-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_income || 0)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-1">Expenses</p>
-                <p className="text-red-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_expenses || 0)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-1">Savings</p>
-                <p className={`font-bold text-lg ${monthlyAnalysis.net_savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                  {formatCurrency(monthlyAnalysis.net_savings || 0)}
-                </p>
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm mb-1">Income</p>
+                  <p className="text-green-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_income || 0)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm mb-1">Expenses</p>
+                  <p className="text-red-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_expenses || 0)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm mb-1">Savings</p>
+                  <p className={`font-bold text-lg ${monthlyAnalysis.net_savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                    {formatCurrency(monthlyAnalysis.net_savings || 0)}
+                  </p>
+                </div>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="card mb-8 text-center py-12">
+            <PieChart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">No expense data for this month yet</p>
+            <p className="text-gray-500 text-sm mt-2">Add some transactions to see visual analytics</p>
           </div>
         )}
 
