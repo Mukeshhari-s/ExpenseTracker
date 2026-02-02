@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
+import DatePicker from './DatePicker';
 import { 
   bankAPI, 
   transactionAPI 
@@ -386,7 +387,11 @@ function BankManagement() {
                 )}
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Date</label>
-                  <input type="date" value={transactionForm.date} onChange={(e) => setTransactionForm({...transactionForm, date: e.target.value})} className="input-field" required />
+                  <DatePicker 
+                    value={transactionForm.date} 
+                    onChange={(date) => setTransactionForm({...transactionForm, date})}
+                    label="Select transaction date"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Notes (Optional)</label>

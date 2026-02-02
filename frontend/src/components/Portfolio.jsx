@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import StockSearch from './StockSearch';
+import DatePicker from './DatePicker';
 import { 
   investmentAPI, 
   dematAPI, 
@@ -452,12 +453,10 @@ function Portfolio() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Buy Date</label>
-                  <input 
-                    type="date" 
+                  <DatePicker 
                     value={investmentForm.buy_date} 
-                    onChange={(e) => setInvestmentForm({...investmentForm, buy_date: e.target.value})} 
-                    className="input-field" 
-                    required 
+                    onChange={(date) => setInvestmentForm({...investmentForm, buy_date: date})}
+                    label="Select purchase date"
                   />
                 </div>
                 <div className="flex space-x-3">
