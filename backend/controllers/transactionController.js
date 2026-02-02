@@ -298,13 +298,17 @@ export const getMonthlySummary = async (req, res) => {
     const incomeTotal = incomeAgg[0]?.total || 0;
     const expenseTotal = expenseAgg[0]?.total || 0;
 
-    console.log(`[MONTHLY SUMMARY] UserId: ${req.user.userId}, Income: ${incomeTotal}, Expenses: ${expenseTotal}`);
+    // Count total transactions
+    const totalTransactions = await Transaction.countDocuments(userMatch);
+
+    console.log(`[MONTHLY SUMMARY] UserId: ${req.user.userId}, Income: ${incomeTotal}, Expenses: ${expenseTotal}, Transactions: ${totalTransactions}`);
 
     res.json({
       period: { start: startDate, end: endDate },
       total_income: incomeTotal,
       total_expenses: expenseTotal,
       net_savings: incomeTotal - expenseTotal,
+      total_transactions: totalTransactions,
       expenses_by_category: expensesByCategory.map((c) => ({
         category: c._id || 'Uncategorized',
         total: c.total,

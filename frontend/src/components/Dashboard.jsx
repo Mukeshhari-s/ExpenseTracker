@@ -13,9 +13,32 @@ import {
   PieChart, 
   ArrowUpCircle,
   ArrowDownCircle,
-  RefreshCw
+  RefreshCw,
+  BarChart3
 } from 'lucide-react';
 import { getUser } from '../utils/auth';
+import { Doughnut, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -34,6 +57,7 @@ function Dashboard() {
   });
 
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [monthlyAnalysis, setMonthlyAnalysis] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -91,6 +115,9 @@ function Dashboard() {
       });
 
       setRecentTransactions(transactions.transactions || []);
+      
+      // Store monthly analysis data for charts
+      setMonthlyAnalysis(monthly);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       console.error('Error details:', error.response?.data || error.message);
@@ -222,6 +249,267 @@ function Dashboard() {
             </p>
           </div>
         </div>
+
+        {/* Monthly Expense Analysis */}
+        {monthlyAnalysis && (monthlyAnalysis.expenses_by_category?.length > 0 || monthlyAnalysis.expenses_by_bank?.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Expenses by Category - Doughnut Chart */}
+            {monthlyAnalysis.expenses_by_category && monthlyAnalysis.expenses_by_category.length > 0 && (
+              <div className="card">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
+                    <PieChart className="w-6 h-6 text-blue-500" />
+                    <span>Expenses by Category</span>
+                  </h2>
+                  <span className="text-sm text-gray-400">This Month</span>
+                </div>
+                
+                <div className="h-64 sm:h-80 flex items-center justify-center mb-4">
+                  <Doughnut
+                    data={{
+                      labels: monthlyAnalysis.expenses_by_category.map(cat => cat.category),
+                      datasets: [{
+                        data: monthlyAnalysis.expenses_by_category.map(cat => cat.total),
+                        backgroundColor: [
+                          'rgba(239, 68, 68, 0.8)',
+                          'rgba(249, 115, 22, 0.8)',
+                          'rgba(251, 191, 36, 0.8)',
+                          'rgba(34, 197, 94, 0.8)',
+                          'rgba(59, 130, 246, 0.8)',
+                          'rgba(168, 85, 247, 0.8)',
+                          'rgba(236, 72, 153, 0.8)',
+                          'rgba(148, 163, 184, 0.8)',
+                        ],
+                        borderColor: 'rgba(31, 41, 55, 1)',
+                        borderWidth: 2,
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            color: 'rgb(229, 231, 235)',
+                            padding: 15,
+                            font: {
+                              size: 11,
+                            }
+                          }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = formatCurrency(context.parsed);
+                              const percentage = ((context.parsed / monthlyAnalysis.total_expenses) * 100).toFixed(1);
+                              return `${label}: ${value} (${percentage}%)`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Category List */}
+                <div className="space-y-2 mt-4">
+                  {monthlyAnalysis.expenses_by_category.slice(0, 5).map((cat, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300">{cat.category}</span>
+                      <span className="text-gray-100 font-semibold">{formatCurrency(cat.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Expenses by Bank - Bar Chart */}
+            {monthlyAnalysis.expenses_by_bank && monthlyAnalysis.expenses_by_bank.length > 0 && (
+              <div className="card">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
+                    <BarChart3 className="w-6 h-6 text-green-500" />
+                    <span>Spending by Bank Account</span>
+                  </h2>
+                  <span className="text-sm text-gray-400">This Month</span>
+                </div>
+                
+                <div className="h-64 sm:h-80 mb-4">
+                  <Bar
+                    data={{
+                      labels: monthlyAnalysis.expenses_by_bank.map(bank => bank.bank_name || 'Unknown'),
+                      datasets: [{
+                        label: 'Expenses',
+                        data: monthlyAnalysis.expenses_by_bank.map(bank => bank.total),
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1,
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: false
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              return `Spent: ${formatCurrency(context.parsed.y)}`;
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            color: 'rgb(156, 163, 175)',
+                            callback: function(value) {
+                              return formatCurrency(value);
+                            }
+                          },
+                          grid: {
+                            color: 'rgba(75, 85, 99, 0.3)',
+                          }
+                        },
+                        x: {
+                          ticks: {
+                            color: 'rgb(156, 163, 175)',
+                          },
+                          grid: {
+                            display: false
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Bank List */}
+                <div className="space-y-2 mt-4">
+                  {monthlyAnalysis.expenses_by_bank.map((bank, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-gray-300">{bank.bank_name || 'Unknown'}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-gray-100 font-semibold">{formatCurrency(bank.total)}</span>
+                        <span className="text-gray-400 text-xs ml-2">({bank.count} txns)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Income vs Expense Comparison */}
+        {monthlyAnalysis && (monthlyAnalysis.total_income > 0 || monthlyAnalysis.total_expenses > 0) && (
+          <div className="card mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
+                <TrendingUp className="w-6 h-6 text-blue-500" />
+                <span>Income vs Expenses</span>
+              </h2>
+              <span className="text-sm text-gray-400">
+                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+
+            <div className="h-64 sm:h-72">
+              <Bar
+                data={{
+                  labels: ['Income', 'Expenses', 'Savings'],
+                  datasets: [{
+                    label: 'Amount',
+                    data: [
+                      monthlyAnalysis.total_income || 0,
+                      monthlyAnalysis.total_expenses || 0,
+                      monthlyAnalysis.net_savings || 0
+                    ],
+                    backgroundColor: [
+                      'rgba(34, 197, 94, 0.7)',
+                      'rgba(239, 68, 68, 0.7)',
+                      monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                    ],
+                    borderColor: [
+                      'rgba(34, 197, 94, 1)',
+                      'rgba(239, 68, 68, 1)',
+                      monthlyAnalysis.net_savings >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 2,
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          return `${context.label}: ${formatCurrency(context.parsed.y)}`;
+                        }
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        color: 'rgb(156, 163, 175)',
+                        callback: function(value) {
+                          return formatCurrency(value);
+                        }
+                      },
+                      grid: {
+                        color: 'rgba(75, 85, 99, 0.3)',
+                      }
+                    },
+                    x: {
+                      ticks: {
+                        color: 'rgb(156, 163, 175)',
+                        font: {
+                          size: 14,
+                          weight: 'bold'
+                        }
+                      },
+                      grid: {
+                        display: false
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-1">Income</p>
+                <p className="text-green-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_income || 0)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-1">Expenses</p>
+                <p className="text-red-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_expenses || 0)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-1">Savings</p>
+                <p className={`font-bold text-lg ${monthlyAnalysis.net_savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                  {formatCurrency(monthlyAnalysis.net_savings || 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Recent Transactions */}
         <div className="card">
