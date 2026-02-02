@@ -1,10 +1,11 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { isAuthenticated } from './utils/auth';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import BankManagement from './components/BankManagement';
-import Portfolio from './components/Portfolio';
-import Profile from './components/Profile';
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const BankManagement = lazy(() => import('./components/BankManagement'));
+const Portfolio = lazy(() => import('./components/Portfolio'));
+const Profile = lazy(() => import('./components/Profile'));
 import './App.css';
 
 // Protected Route wrapper
@@ -20,7 +21,8 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <Router>
-      <Routes>
+      <Suspense fallback={<div className="loading"><div className="spinner"></div></div>}>
+        <Routes>
         {/* Public Routes */}
         <Route
           path="/login"
@@ -68,7 +70,8 @@ function App() {
         {/* Default Routes */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

@@ -16,6 +16,8 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getUser();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiRootUrl = apiBaseUrl.replace(/\/api\/?$/, '');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -73,9 +75,9 @@ function Navbar() {
                   : 'text-gray-300 hover:bg-gray-700'
               }`}
             >
-              {user?.profile_photo ? (
+              {user?.profilePhoto ? (
                 <img
-                  src={`http://localhost:5000${user.profile_photo}`}
+                  src={`${apiRootUrl}${user.profilePhoto}`}
                   alt="Profile"
                   className="w-8 h-8 rounded-full object-cover"
                 />

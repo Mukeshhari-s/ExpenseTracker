@@ -189,15 +189,6 @@ function BankManagement() {
     });
   };
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="loading"><div className="spinner"></div></div>
-      </>
-    );
-  }
-
   return (
     <>
       <Navbar />

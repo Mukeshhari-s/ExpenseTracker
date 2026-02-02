@@ -59,6 +59,16 @@ function Profile() {
 
   const fetchMonthlyHistory = async () => {
     try {
+      const cached = sessionStorage.getItem('profile_monthly_history');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.data && parsed?.timestamp && Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+          setMonthlyHistory(parsed.data);
+          setLoadingHistory(false);
+          return;
+        }
+      }
+
       setLoadingHistory(true);
       
       // Get last 6 months of data
@@ -89,7 +99,12 @@ function Profile() {
         data: res.data || {}
       }));
       
-      setMonthlyHistory(history.reverse());
+      const finalHistory = history.reverse();
+      setMonthlyHistory(finalHistory);
+      sessionStorage.setItem('profile_monthly_history', JSON.stringify({
+        data: finalHistory,
+        timestamp: Date.now()
+      }));
     } catch (error) {
       console.error('Error fetching monthly history:', error);
     } finally {

@@ -163,15 +163,6 @@ function Portfolio() {
     return `${symbol}${Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
   };
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="loading"><div className="spinner"></div></div>
-      </>
-    );
-  }
-
   const totalProfitLoss = portfolio?.total_profit_loss || 0;
   const profitLossPercent = portfolio?.profit_loss_percentage || 0;
   const isProfit = totalProfitLoss >= 0;

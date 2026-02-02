@@ -118,7 +118,10 @@ function Dashboard() {
   const fetchMonthlyAnalysis = async () => {
     try {
       console.log(`Fetching analysis for ${selectedMonth}/${selectedYear}`);
-      const response = await transactionAPI.getMonthlySummary(selectedMonth, selectedYear);
+      const response = await transactionAPI.getMonthlySummary({
+        month: selectedMonth,
+        year: selectedYear
+      });
       console.log('Monthly Analysis Response:', response.data);
       setMonthlyAnalysis(response.data || {});
     } catch (error) {
@@ -180,17 +183,6 @@ function Dashboard() {
       year: 'numeric',
     });
   };
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="loading">
-          <div className="spinner"></div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
