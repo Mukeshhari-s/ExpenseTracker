@@ -19,6 +19,12 @@ import { getUser } from '../utils/auth';
 
 function BankManagement() {
   const user = getUser();
+  const getLocalDateString = () => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  };
   const [banks, setBanks] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -44,7 +50,7 @@ function BankManagement() {
     category: '',
     source: '',
     notes: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
   });
 
   const [filters, setFilters] = useState({
@@ -128,7 +134,7 @@ function BankManagement() {
       category: '',
       source: '',
       notes: '',
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateString(),
     });
     setEditingTransaction(null);
     setShowTransactionModal(true);
@@ -204,7 +210,8 @@ function BankManagement() {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString.includes('T') ? dateString : `${dateString}T00:00:00`);
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -230,22 +237,28 @@ function BankManagement() {
           {banks.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {banks.map((bank) => (
-                <div key={bank.id} className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-4 sm:p-6 rounded-lg shadow-md">
+                <div key={bank.id} className={`${
+                  bank.is_cash
+                    ? 'bg-gradient-to-br from-amber-500 to-amber-700'
+                    : 'bg-gradient-to-br from-blue-500 to-blue-700'
+                } text-white p-4 sm:p-6 rounded-lg shadow-md`}>
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm opacity-90 truncate">{bank.account_type}</p>
                       <h3 className="text-lg sm:text-xl font-bold truncate">{bank.bank_name}</h3>
                     </div>
-                    <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
-                      <button onClick={() => handleEditBank(bank)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDeleteBank(bank.id)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {!bank.is_cash && (
+                      <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
+                        <button onClick={() => handleEditBank(bank)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteBank(bank.id)} className="p-1.5 sm:p-1 hover:bg-white/20 rounded">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs sm:text-sm opacity-90 mb-2 truncate">****{bank.account_number.slice(-4)}</p>
+                  <p className="text-xs sm:text-sm opacity-90 mb-2 truncate">{bank.is_cash ? 'Always Available' : `****${bank.account_number.slice(-4)}`}</p>
                   <p className="text-2xl sm:text-3xl font-bold truncate">{formatCurrency(bank.balance)}</p>
                 </div>
               ))}
@@ -371,10 +384,8 @@ function BankManagement() {
                     {transactionForm.type === 'transfer' ? 'From Account' : 'Bank Account'}
                   </label>
                   <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field">
-                    {transactionForm.type !== 'transfer' && (
-                      <option value="cash">Cash (Default)</option>
-                    )}
-                    {banks.map((bank) => (
+                    <option value="cash">Cash (Default)</option>
+                    {banks.filter(b => !b.is_cash).map((bank) => (
                       <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
                     ))}
                   </select>
@@ -384,7 +395,8 @@ function BankManagement() {
                     <label className="block text-sm font-medium text-gray-200 mb-1">To Account</label>
                     <select value={transactionForm.to_bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, to_bank_account_id: e.target.value})} className="input-field" required>
                       <option value="">Select account</option>
-                      {banks.map((bank) => (
+                      <option value="cash">Cash</option>
+                      {banks.filter(b => !b.is_cash).map((bank) => (
                         <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
                       ))}
                     </select>

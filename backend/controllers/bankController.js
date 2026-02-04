@@ -1,5 +1,23 @@
 import BankAccount from '../models/BankAccount.js';
 
+// Helper: Calculate cash balance from transactions
+const getCashBalance = async (userId) => {
+  const Transaction = (await import('../models/Transaction.js')).default;
+  const transactions = await Transaction.find({
+    userId,
+    bankAccountId: null
+  });
+
+  return transactions.reduce((balance, tx) => {
+    if (tx.type === 'income') {
+      return balance + tx.amount;
+    } else if (tx.type === 'expense') {
+      return balance - tx.amount;
+    }
+    return balance;
+  }, 0);
+};
+
 // Get all bank accounts for user
 export const getBankAccounts = async (req, res) => {
   try {
@@ -13,9 +31,22 @@ export const getBankAccounts = async (req, res) => {
       account_type: account.accountType,
       balance: account.balance,
       created_at: account.createdAt,
+      is_cash: false,
     }));
 
-    res.json({ accounts: normalized });
+    // Add virtual Cash account (always first)
+    const cashBalance = await getCashBalance(req.user.userId);
+    const cashAccount = {
+      id: 'cash',
+      bank_name: 'Cash',
+      account_number: 'CASH',
+      account_type: 'Cash',
+      balance: cashBalance,
+      created_at: new Date(),
+      is_cash: true,
+    };
+
+    res.json({ accounts: [cashAccount, ...normalized] });
   } catch (error) {
     console.error('Get bank accounts error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -63,6 +94,12 @@ export const addBankAccount = async (req, res) => {
 export const updateBankAccount = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Prevent update of Cash account
+    if (id === 'cash') {
+      return res.status(400).json({ error: 'Cannot modify Cash account' });
+    }
+
     const bankName = req.body.bankName || req.body.bank_name;
     const accountNumber = req.body.accountNumber || req.body.account_number;
     const accountType = req.body.accountType || req.body.account_type;
@@ -91,6 +128,7 @@ export const updateBankAccount = async (req, res) => {
         account_number: account.accountNumber,
         account_type: account.accountType,
         balance: account.balance,
+        is_cash: false,
       }
     });
   } catch (error) {
@@ -103,6 +141,11 @@ export const updateBankAccount = async (req, res) => {
 export const deleteBankAccount = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Prevent deletion of Cash account
+    if (id === 'cash') {
+      return res.status(400).json({ error: 'Cannot delete Cash account' });
+    }
 
     const account = await BankAccount.findOneAndDelete({ _id: id, userId: req.user.userId });
 
@@ -134,6 +177,7 @@ export const getAccountSummary = async (req, res) => {
         account_number: account.accountNumber,
         account_type: account.accountType,
         balance: account.balance,
+        is_cash: false,
       }))
     });
   } catch (error) {

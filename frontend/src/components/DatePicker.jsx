@@ -4,8 +4,17 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 function DatePicker({ value, onChange, label = 'Select Date' }) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentDate, setCurrentDate] = useState(
-    value ? new Date(value) : new Date()
+    value
+      ? new Date(value.includes('T') ? value : `${value}T00:00:00`)
+      : new Date()
   );
+
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -33,14 +42,14 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
       currentDate.getMonth(),
       day
     );
-    const dateString = selectedDate.toISOString().split('T')[0];
+    const dateString = formatLocalDate(selectedDate);
     onChange(dateString);
     setShowCalendar(false);
   };
 
   const formatDisplayDate = (dateString) => {
     if (!dateString) return label;
-    const date = new Date(dateString + 'T00:00:00');
+    const date = new Date(dateString.includes('T') ? dateString : `${dateString}T00:00:00`);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -174,7 +183,7 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
             type="button"
             onClick={() => {
               const today = new Date();
-              const dateString = today.toISOString().split('T')[0];
+              const dateString = formatLocalDate(today);
               onChange(dateString);
               setCurrentDate(today);
               setShowCalendar(false);

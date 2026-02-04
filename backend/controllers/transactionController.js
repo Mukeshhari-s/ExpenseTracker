@@ -76,6 +76,7 @@ export const addTransaction = async (req, res) => {
     const date = req.body.date;
     const rawToBankAccountId = req.body.toBankAccountId || req.body.to_bank_account_id;
     const toBankAccountId = rawToBankAccountId && rawToBankAccountId !== 'cash' ? rawToBankAccountId : null;
+    const parsedDate = date && date.includes('T') ? new Date(date) : new Date(`${date}T00:00:00`);
 
     if (!type || Number.isNaN(amount) || !date) {
       return res.status(400).json({ 
@@ -124,7 +125,7 @@ export const addTransaction = async (req, res) => {
       category,
       source,
       notes,
-      date: new Date(date)
+      date: parsedDate
     });
 
     if (type === 'transfer') {
@@ -183,6 +184,7 @@ export const updateTransaction = async (req, res) => {
       : undefined;
     const { type, category, source, notes, date } = req.body;
     const amount = req.body.amount !== undefined ? Number(req.body.amount) : undefined;
+    const parsedDate = date ? (date.includes('T') ? new Date(date) : new Date(`${date}T00:00:00`)) : undefined;
 
     const transaction = await Transaction.findOne({ 
       _id: id, 
@@ -266,7 +268,7 @@ export const updateTransaction = async (req, res) => {
         category: category !== undefined ? category : transaction.category,
         source: source !== undefined ? source : transaction.source,
         notes: notes !== undefined ? notes : transaction.notes,
-        date: date ? new Date(date) : transaction.date
+        date: parsedDate || transaction.date
       },
       { new: true }
     );
@@ -363,26 +365,25 @@ export const getMonthlySummary = async (req, res) => {
   try {
     const { month, year } = req.query;
     
-    let startDate, endDate;
+    let targetMonth, targetYear;
     
     if (month && year) {
-      startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      // Calculate last day of the month (month is 1-indexed from API)
-      const lastDay = new Date(year, month, 0).getDate();
-      endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      targetMonth = parseInt(month);
+      targetYear = parseInt(year);
     } else {
       // Current month
       const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1; // 1-indexed
-      startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-      // Calculate last day of current month (use next month's day 0)
-      const lastDay = new Date(currentYear, currentMonth, 0).getDate();
-      endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      targetYear = now.getFullYear();
+      targetMonth = now.getMonth() + 1; // 1-indexed
     }
 
-    const startDateObj = new Date(`${startDate}T00:00:00Z`);
-    const endDateObj = new Date(`${endDate}T23:59:59Z`);
+    const startDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`;
+    const lastDay = new Date(targetYear, targetMonth, 0).getDate();
+    const endDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    // Create date objects using local time (midnight)
+    const startDateObj = new Date(`${startDate}T00:00:00`);
+    const endDateObj = new Date(`${endDate}T23:59:59`);
     
     console.log(`[MONTHLY SUMMARY] Date range: ${startDate} to ${endDate}`);
     console.log(`[MONTHLY SUMMARY] Start: ${startDateObj.toISOString()}, End: ${endDateObj.toISOString()}`);

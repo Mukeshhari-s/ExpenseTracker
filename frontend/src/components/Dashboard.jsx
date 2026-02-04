@@ -178,7 +178,8 @@ function Dashboard() {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString.includes('T') ? dateString : `${dateString}T00:00:00`);
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -210,14 +211,14 @@ function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Monthly Expenses */}
           <div className="stat-card">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-300 font-medium text-xs sm:text-sm">Monthly Expenses</span>
               <ArrowDownCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" />
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-gray-100 truncate">
+            <div className="text-2xl sm:text-2xl font-bold text-gray-100 truncate">
               {formatCurrency(summary.monthlyExpenses)}
             </div>
             <p className="text-xs sm:text-sm text-gray-400 mt-2">
@@ -231,7 +232,7 @@ function Dashboard() {
               <span className="text-gray-300 font-medium text-xs sm:text-sm">Net Savings</span>
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
             </div>
-            <div className={`text-2xl sm:text-3xl font-bold ${summary.netSavings >= 0 ? 'profit' : 'loss'} truncate`}>
+            <div className={`text-2xl sm:text-2xl font-bold ${summary.netSavings >= 0 ? 'profit' : 'loss'} truncate`}>
               {formatCurrency(summary.netSavings)}
             </div>
             <p className="text-xs sm:text-sm text-gray-400 mt-2">
@@ -245,7 +246,7 @@ function Dashboard() {
               <span className="text-gray-300 font-medium">Bank Balance</span>
               <PieChart className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="text-3xl font-bold text-gray-100">
+            <div className="text-2xl sm:text-2xl font-bold text-gray-100">
               {formatCurrency(summary.totalBalance)}
             </div>
             <p className="text-sm text-gray-400 mt-2">
@@ -259,7 +260,7 @@ function Dashboard() {
               <span className="text-gray-300 font-medium">Portfolio Value</span>
               <TrendingUp className={`w-6 h-6 ${summary.portfolioProfit >= 0 ? 'text-green-500' : 'text-red-500'}`} />
             </div>
-            <div className="text-3xl font-bold text-gray-100">
+            <div className="text-2xl font-bold text-gray-100">
               {formatCurrency(summary.portfolioValue)}
             </div>
             <p className={`text-sm mt-2 ${summary.portfolioProfit >= 0 ? 'profit' : 'loss'}`}>
@@ -309,10 +310,10 @@ function Dashboard() {
           <div className="space-y-6 mb-8">
             {/* Category and Bank Charts Grid */}
             {(monthlyAnalysis.expenses_by_category?.length > 0 || monthlyAnalysis.expenses_by_bank?.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Expenses by Category - Doughnut Chart */}
                 {monthlyAnalysis.expenses_by_category && monthlyAnalysis.expenses_by_category.length > 0 && (
-              <div className="card">
+              <div className="card lg:col-span-1">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
                     <PieChart className="w-6 h-6 text-blue-500" />
@@ -321,7 +322,7 @@ function Dashboard() {
                   <span className="text-sm text-gray-400">This Month</span>
                 </div>
                 
-                <div className="h-64 sm:h-80 flex items-center justify-center mb-4">
+                <div className="h-48 sm:h-56 flex items-center justify-center mb-4">
                   <Doughnut
                     data={{
                       labels: monthlyAnalysis.expenses_by_category.map(cat => cat.category),
@@ -384,7 +385,7 @@ function Dashboard() {
 
             {/* Expenses by Bank - Bar Chart */}
             {monthlyAnalysis.expenses_by_bank && monthlyAnalysis.expenses_by_bank.length > 0 && (
-              <div className="card">
+              <div className="card lg:col-span-2">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
                     <BarChart3 className="w-6 h-6 text-green-500" />
@@ -393,7 +394,7 @@ function Dashboard() {
                   <span className="text-sm text-gray-400">This Month</span>
                 </div>
                 
-                <div className="h-64 sm:h-80 mb-4">
+                <div className="h-48 sm:h-56 mb-4">
                   <Bar
                     data={{
                       labels: monthlyAnalysis.expenses_by_bank.map(bank => bank.bank_name || 'Unknown'),
@@ -447,7 +448,7 @@ function Dashboard() {
                 </div>
 
                 {/* Bank List */}
-                <div className="space-y-2 mt-4">
+                <div className="space-y-2 mt-4 max-h-40 overflow-y-auto">
                   {monthlyAnalysis.expenses_by_bank.map((bank, idx) => (
                     <div key={idx} className="flex justify-between items-center text-sm">
                       <div className="flex items-center space-x-2">
@@ -466,20 +467,22 @@ function Dashboard() {
               </div>
             )}
 
-            {/* Income vs Expense Comparison */}
-            <div className="card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-100 flex items-center space-x-2">
-                  <TrendingUp className="w-6 h-6 text-blue-500" />
-                  <span>Income vs Expenses</span>
-                </h2>
-                <span className="text-sm text-gray-400">
-                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
-              </div>
+            {/* Income vs Expense Comparison & Recent Transactions */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Income vs Expense - takes 2 columns */}
+              <div className="card lg:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-100 flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5 text-blue-500" />
+                    <span>Income vs Expenses</span>
+                  </h2>
+                  <span className="text-xs text-gray-400">
+                    {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
 
-              <div className="h-64 sm:h-72">
-                <Bar
+                <div className="h-40">
+                  <Bar
                   data={{
                     labels: ['Income', 'Expenses', 'Savings'],
                     datasets: [{
@@ -547,22 +550,93 @@ function Dashboard() {
                 />
               </div>
 
-              {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
+              {/* Summary Stats - Compact */}
+              <div className="grid grid-cols-3 gap-2 mt-4">
                 <div className="text-center">
-                  <p className="text-gray-400 text-sm mb-1">Income</p>
-                  <p className="text-green-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_income || 0)}</p>
+                  <p className="text-gray-400 text-xs mb-1">Income</p>
+                  <p className="text-green-400 font-bold text-sm">{formatCurrency(monthlyAnalysis.total_income || 0)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-gray-400 text-sm mb-1">Expenses</p>
-                  <p className="text-red-400 font-bold text-lg">{formatCurrency(monthlyAnalysis.total_expenses || 0)}</p>
+                  <p className="text-gray-400 text-xs mb-1">Expenses</p>
+                  <p className="text-red-400 font-bold text-sm">{formatCurrency(monthlyAnalysis.total_expenses || 0)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-gray-400 text-sm mb-1">Savings</p>
-                  <p className={`font-bold text-lg ${monthlyAnalysis.net_savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                  <p className="text-gray-400 text-xs mb-1">Savings</p>
+                  <p className={`font-bold text-sm ${monthlyAnalysis.net_savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                     {formatCurrency(monthlyAnalysis.net_savings || 0)}
                   </p>
                 </div>
+              </div>
+              </div>
+
+              {/* Recent Transactions - takes 1 column */}
+              <div className="card">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-100">Recent</h2>
+                  <button
+                    onClick={() => navigate('/banks')}
+                    className="text-blue-400 hover:text-blue-300 text-xs font-medium">
+                    View All →
+                  </button>
+                </div>
+
+                {recentTransactions.length > 0 ? (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {recentTransactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-2 bg-gray-700 rounded text-sm"
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            transaction.type === 'income'
+                              ? 'bg-green-900'
+                              : transaction.type === 'expense'
+                              ? 'bg-red-900'
+                              : 'bg-blue-900/20'
+                          }`}>
+                            {transaction.type === 'income' ? (
+                              <ArrowUpCircle className="w-4 h-4 text-green-600" />
+                            ) : transaction.type === 'expense' ? (
+                              <ArrowDownCircle className="w-4 h-4 text-red-600" />
+                            ) : (
+                              <ArrowLeftRight className="w-4 h-4 text-blue-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-100 text-xs truncate">
+                              {transaction.type === 'transfer'
+                                ? 'Transfer'
+                                : transaction.category || transaction.source || transaction.type}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {formatDate(transaction.date)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className={`text-xs font-bold flex-shrink-0 ml-2 ${
+                          transaction.type === 'income'
+                            ? 'text-green-400'
+                            : transaction.type === 'expense'
+                            ? 'text-red-400'
+                            : 'text-blue-400'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}{formatCurrency(transaction.amount)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-400 text-sm">
+                    <p>No transactions yet</p>
+                    <button
+                      onClick={() => navigate('/banks')}
+                      className="btn-primary mt-2 text-xs py-1"
+                    >
+                      Add Transaction
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -573,79 +647,6 @@ function Dashboard() {
             <p className="text-gray-500 text-sm mt-2">Add some transactions to see visual analytics</p>
           </div>
         )}
-
-        {/* Recent Transactions */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">Recent Transactions</h2>
-            <button
-              onClick={() => navigate('/banks')}
-              className="text-blue-400 hover:text-blue-300 font-medium">
-              View All →
-            </button>
-          </div>
-
-          {recentTransactions.length > 0 ? (
-            <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income'
-                        ? 'bg-green-900'
-                        : transaction.type === 'expense'
-                        ? 'bg-red-100'
-                        : 'bg-blue-900/20'
-                    }`}>
-                      {transaction.type === 'income' ? (
-                        <ArrowUpCircle className="w-6 h-6 text-green-600" />
-                      ) : transaction.type === 'expense' ? (
-                        <ArrowDownCircle className="w-6 h-6 text-red-600" />
-                      ) : (
-                        <ArrowLeftRight className="w-6 h-6 text-blue-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-100">
-                        {transaction.type === 'transfer'
-                          ? 'Transfer'
-                          : transaction.category || transaction.source || transaction.type}
-                      </p>
-                      <p className="text-sm text-gray-300">
-                        {transaction.type === 'transfer'
-                          ? `${transaction.bank_name} → ${transaction.to_bank_name || 'Unknown'}`
-                          : transaction.bank_name} • {formatDate(transaction.date)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`text-lg font-bold ${
-                    transaction.type === 'income'
-                      ? 'profit'
-                      : transaction.type === 'expense'
-                      ? 'loss'
-                      : 'text-blue-400'
-                  }`}>
-                    {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}{formatCurrency(transaction.amount)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-400">
-              <PieChart className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>No transactions yet</p>
-              <button
-                onClick={() => navigate('/banks')}
-                className="btn-primary mt-4"
-              >
-                Add Transaction
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
