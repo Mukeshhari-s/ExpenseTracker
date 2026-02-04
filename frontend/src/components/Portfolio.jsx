@@ -170,10 +170,10 @@ function Portfolio() {
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Investment Portfolio</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Investment Portfolio</h1>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -185,9 +185,9 @@ function Portfolio() {
         </div>
 
         {/* Demat Accounts */}
-        <div className="card mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Demat Accounts</h2>
+        <div className="card mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-3">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-100">Demat Accounts</h2>
             <button onClick={handleAddDemat} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Demat Account</span>
@@ -217,29 +217,29 @@ function Portfolio() {
         </div>
 
         {/* Portfolio Summary - Angel One Inspired */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-4 sm:p-8 mb-8 shadow-xl">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-3 sm:p-6 mb-6 shadow-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
             <div>
-              <p className="text-sm opacity-90 mb-1">Total Invested</p>
-              <p className="text-3xl font-bold">{formatCurrency(portfolio?.total_invested || 0)}</p>
+              <p className="text-xs sm:text-sm opacity-90 mb-1">Total Invested</p>
+              <p className="text-2xl sm:text-2xl font-bold">{formatCurrency(portfolio?.total_invested || 0)}</p>
             </div>
             <div>
-              <p className="text-sm opacity-90 mb-1">Current Value</p>
-              <p className="text-3xl font-bold">{formatCurrency(portfolio?.current_value || 0)}</p>
+              <p className="text-xs sm:text-sm opacity-90 mb-1">Current Value</p>
+              <p className="text-2xl sm:text-2xl font-bold">{formatCurrency(portfolio?.current_value || 0)}</p>
             </div>
             <div>
-              <p className="text-sm opacity-90 mb-1">Total Profit/Loss</p>
+              <p className="text-xs sm:text-sm opacity-90 mb-1">Total Profit/Loss</p>
               <div className="flex items-center space-x-2">
                 {isProfit ? (
-                  <TrendingUp className="w-6 h-6" />
+                  <TrendingUp className="w-5 h-5" />
                 ) : (
-                  <TrendingDown className="w-6 h-6" />
+                  <TrendingDown className="w-5 h-5" />
                 )}
                 <div>
-                  <p className="text-3xl font-bold">
+                  <p className="text-2xl sm:text-2xl font-bold">
                     {isProfit ? '+' : ''}{formatCurrency(totalProfitLoss)}
                   </p>
-                  <p className="text-sm opacity-90">
+                  <p className="text-xs sm:text-sm opacity-90">
                     {isProfit ? '+' : ''}{profitLossPercent.toFixed(2)}%
                   </p>
                 </div>
@@ -250,8 +250,8 @@ function Portfolio() {
 
         {/* Holdings */}
         <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-100">Holdings</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-100">Holdings</h2>
             <button 
               onClick={handleAddInvestment} 
               className="btn-primary flex items-center space-x-2"
@@ -267,14 +267,14 @@ function Portfolio() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-200">Stock</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Qty</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Avg Price</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">LTP</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Invested</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">Current</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-200">P&L</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-200">Actions</th>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-200 text-sm">Stock</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">Qty</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">Avg Price</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">LTP</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">Invested</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">Current</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-200 text-sm">P&L</th>
+                    <th className="text-center py-2 px-3 font-semibold text-gray-200 text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -285,18 +285,18 @@ function Portfolio() {
                     
                     return (
                       <tr key={holding.stock_symbol} className="border-b border-gray-700 hover:bg-gray-700/50">
-                        <td className="py-4 px-4">
+                        <td className="py-3 px-3">
                           <div>
-                            <p className="font-semibold text-gray-100">{holding.stock_symbol}</p>
-                            <p className="text-sm text-gray-300">{holding.stock_name}</p>
+                            <p className="font-semibold text-gray-100 text-sm">{holding.stock_symbol}</p>
+                            <p className="text-xs text-gray-300">{holding.stock_name}</p>
                           </div>
                         </td>
-                        <td className="text-right py-4 px-4 text-gray-100">{holding.quantity}</td>
-                        <td className="text-right py-4 px-4 text-gray-100">{formatCurrency(holding.avg_buy_price)}</td>
-                        <td className="text-right py-4 px-4 font-medium text-gray-100">{formatCurrency(holding.current_price)}</td>
-                        <td className="text-right py-4 px-4 text-gray-100">{formatCurrency(holding.invested_amount)}</td>
-                        <td className="text-right py-4 px-4 font-medium text-gray-100">{formatCurrency(holding.current_value)}</td>
-                        <td className={`text-right py-4 px-4 font-bold ${isProfitable ? 'profit' : 'loss'}`}>
+                        <td className="text-right py-3 px-3 text-gray-100 text-sm">{holding.quantity}</td>
+                        <td className="text-right py-3 px-3 text-gray-100 text-sm">{formatCurrency(holding.avg_buy_price)}</td>
+                        <td className="text-right py-3 px-3 font-medium text-gray-100 text-sm">{formatCurrency(holding.current_price)}</td>
+                        <td className="text-right py-3 px-3 text-gray-100 text-sm">{formatCurrency(holding.invested_amount)}</td>
+                        <td className="text-right py-3 px-3 font-medium text-gray-100 text-sm">{formatCurrency(holding.current_value)}</td>
+                        <td className={`text-right py-3 px-3 font-bold text-sm ${isProfitable ? 'profit' : 'loss'}`}>
                           <div>
                             <p>{isProfitable ? '+' : ''}{formatCurrency(profitLoss)}</p>
                             <p className="text-sm">{isProfitable ? '+' : ''}{profitLossPct.toFixed(2)}%</p>

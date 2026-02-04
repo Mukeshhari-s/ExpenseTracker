@@ -221,13 +221,13 @@ function BankManagement() {
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-6 sm:mb-8">Bank Accounts & Transactions</h1>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4 sm:mb-6">Bank Accounts & Transactions</h1>
 
         {/* Bank Accounts Section */}
-        <div className="card mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Your Bank Accounts</h2>
+        <div className="card mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-3">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-100">Your Bank Accounts</h2>
             <button onClick={handleAddBank} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Bank</span>
@@ -259,7 +259,7 @@ function BankManagement() {
                     )}
                   </div>
                   <p className="text-xs sm:text-sm opacity-90 mb-2 truncate">{bank.is_cash ? 'Always Available' : `****${bank.account_number.slice(-4)}`}</p>
-                  <p className="text-2xl sm:text-3xl font-bold truncate">{formatCurrency(bank.balance)}</p>
+                  <p className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(bank.balance)}</p>
                 </div>
               ))}
             </div>
@@ -270,8 +270,8 @@ function BankManagement() {
 
         {/* Transactions Section */}
         <div className="card">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 sm:gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-100">Transactions</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-3">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-100">Transactions</h2>
             <button onClick={handleAddTransaction} className="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
               <Plus className="w-5 h-5" />
               <span>Add Transaction</span>
@@ -284,7 +284,7 @@ function BankManagement() {
               {transactions.map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-700">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       transaction.type === 'income'
                         ? 'bg-green-900/20'
                         : transaction.type === 'expense'
@@ -292,11 +292,11 @@ function BankManagement() {
                         : 'bg-blue-900/20'
                     }`}>
                       {transaction.type === 'income' ? (
-                        <ArrowUpCircle className="w-6 h-6 text-green-600" />
+                        <ArrowUpCircle className="w-5 h-5 text-green-600" />
                       ) : transaction.type === 'expense' ? (
-                        <ArrowDownCircle className="w-6 h-6 text-red-600" />
+                        <ArrowDownCircle className="w-5 h-5 text-red-600" />
                       ) : (
-                        <ArrowLeftRight className="w-6 h-6 text-blue-400" />
+                        <ArrowLeftRight className="w-5 h-5 text-blue-400" />
                       )}
                     </div>
                     <div>
@@ -342,8 +342,8 @@ function BankManagement() {
         {showBankModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
-              <form onSubmit={handleSaveBank} className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-100 mb-3">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
+              <form onSubmit={handleSaveBank} className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Bank Name</label>
                   <input type="text" value={bankForm.bank_name} onChange={(e) => setBankForm({...bankForm, bank_name: e.target.value})} className="input-field" required />
@@ -377,8 +377,8 @@ function BankManagement() {
         {showTransactionModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
-              <form onSubmit={handleSaveTransaction} className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-100 mb-3">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
+              <form onSubmit={handleSaveTransaction} className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">
                     {transactionForm.type === 'transfer' ? 'From Account' : 'Bank Account'}
