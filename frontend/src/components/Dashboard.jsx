@@ -13,6 +13,7 @@ import {
   PieChart, 
   ArrowUpCircle,
   ArrowDownCircle,
+  ArrowLeftRight,
   RefreshCw,
   BarChart3,
   ChevronLeft,
@@ -593,27 +594,41 @@ function Dashboard() {
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income' ? 'bg-green-900' : 'bg-red-100'
+                      transaction.type === 'income'
+                        ? 'bg-green-900'
+                        : transaction.type === 'expense'
+                        ? 'bg-red-100'
+                        : 'bg-blue-900/20'
                     }`}>
                       {transaction.type === 'income' ? (
                         <ArrowUpCircle className="w-6 h-6 text-green-600" />
-                      ) : (
+                      ) : transaction.type === 'expense' ? (
                         <ArrowDownCircle className="w-6 h-6 text-red-600" />
+                      ) : (
+                        <ArrowLeftRight className="w-6 h-6 text-blue-400" />
                       )}
                     </div>
                     <div>
                       <p className="font-medium text-gray-100">
-                        {transaction.category || transaction.source || transaction.type}
+                        {transaction.type === 'transfer'
+                          ? 'Transfer'
+                          : transaction.category || transaction.source || transaction.type}
                       </p>
                       <p className="text-sm text-gray-300">
-                        {transaction.bank_name} • {formatDate(transaction.date)}
+                        {transaction.type === 'transfer'
+                          ? `${transaction.bank_name} → ${transaction.to_bank_name || 'Unknown'}`
+                          : transaction.bank_name} • {formatDate(transaction.date)}
                       </p>
                     </div>
                   </div>
                   <div className={`text-lg font-bold ${
-                    transaction.type === 'income' ? 'profit' : 'loss'
+                    transaction.type === 'income'
+                      ? 'profit'
+                      : transaction.type === 'expense'
+                      ? 'loss'
+                      : 'text-blue-400'
                   }`}>
-                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}{formatCurrency(transaction.amount)}
                   </div>
                 </div>
               ))}

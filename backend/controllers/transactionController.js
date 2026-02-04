@@ -28,6 +28,7 @@ export const getTransactions = async (req, res) => {
 
     let transactionQuery = Transaction.find(query)
       .populate('bankAccountId', 'bankName accountType')
+      .populate('toBankAccountId', 'bankName accountType')
       .sort({ date: -1, createdAt: -1 });
 
     // Apply limit if provided
@@ -43,6 +44,9 @@ export const getTransactions = async (req, res) => {
       bank_account_id: tx.bankAccountId?._id || null,
       bank_name: tx.bankAccountId?.bankName || 'Cash',
       bank_account_type: tx.bankAccountId?.accountType || 'Cash',
+      to_bank_account_id: tx.toBankAccountId?._id || null,
+      to_bank_name: tx.toBankAccountId?.bankName || null,
+      to_bank_account_type: tx.toBankAccountId?.accountType || null,
       type: tx.type,
       amount: tx.amount,
       category: tx.category,
@@ -70,6 +74,8 @@ export const addTransaction = async (req, res) => {
     const source = req.body.source;
     const notes = req.body.notes;
     const date = req.body.date;
+    const rawToBankAccountId = req.body.toBankAccountId || req.body.to_bank_account_id;
+    const toBankAccountId = rawToBankAccountId && rawToBankAccountId !== 'cash' ? rawToBankAccountId : null;
 
     if (!type || Number.isNaN(amount) || !date) {
       return res.status(400).json({ 
@@ -77,11 +83,27 @@ export const addTransaction = async (req, res) => {
       });
     }
 
-    if (!['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be either income or expense' });
+    if (!['income', 'expense', 'transfer'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be income, expense, or transfer' });
     }
 
-    if (bankAccountId) {
+    if (type === 'transfer') {
+      if (!bankAccountId || !toBankAccountId) {
+        return res.status(400).json({ error: 'Transfer requires from and to bank accounts' });
+      }
+      if (bankAccountId === toBankAccountId) {
+        return res.status(400).json({ error: 'Transfer accounts must be different' });
+      }
+
+      const [fromAccount, toAccount] = await Promise.all([
+        BankAccount.findOne({ _id: bankAccountId, userId: req.user.userId }),
+        BankAccount.findOne({ _id: toBankAccountId, userId: req.user.userId })
+      ]);
+
+      if (!fromAccount || !toAccount) {
+        return res.status(404).json({ error: 'Bank account not found' });
+      }
+    } else if (bankAccountId) {
       // Verify bank account belongs to user
       const bankAccount = await BankAccount.findOne({ 
         _id: bankAccountId, 
@@ -96,6 +118,7 @@ export const addTransaction = async (req, res) => {
     const transaction = await Transaction.create({
       userId: req.user.userId,
       bankAccountId,
+      toBankAccountId: type === 'transfer' ? toBankAccountId : null,
       type,
       amount,
       category,
@@ -104,7 +127,16 @@ export const addTransaction = async (req, res) => {
       date: new Date(date)
     });
 
-    if (bankAccountId) {
+    if (type === 'transfer') {
+      await BankAccount.findByIdAndUpdate(
+        bankAccountId,
+        { $inc: { balance: -amount } }
+      );
+      await BankAccount.findByIdAndUpdate(
+        toBankAccountId,
+        { $inc: { balance: amount } }
+      );
+    } else if (bankAccountId) {
       // Update bank account balance
       const balanceChange = type === 'income' ? amount : -amount;
       await BankAccount.findByIdAndUpdate(
@@ -118,6 +150,7 @@ export const addTransaction = async (req, res) => {
       transaction: {
         id: transaction._id,
         bank_account_id: transaction.bankAccountId,
+        to_bank_account_id: transaction.toBankAccountId,
         type: transaction.type,
         amount: transaction.amount,
         category: transaction.category,
@@ -142,6 +175,12 @@ export const updateTransaction = async (req, res) => {
     const bankAccountId = hasBankAccountId
       ? (rawBankAccountId && rawBankAccountId !== 'cash' ? rawBankAccountId : null)
       : undefined;
+    const hasToBankAccountId = Object.prototype.hasOwnProperty.call(req.body, 'toBankAccountId') ||
+      Object.prototype.hasOwnProperty.call(req.body, 'to_bank_account_id');
+    const rawToBankAccountId = req.body.toBankAccountId || req.body.to_bank_account_id;
+    const toBankAccountId = hasToBankAccountId
+      ? (rawToBankAccountId && rawToBankAccountId !== 'cash' ? rawToBankAccountId : null)
+      : undefined;
     const { type, category, source, notes, date } = req.body;
     const amount = req.body.amount !== undefined ? Number(req.body.amount) : undefined;
 
@@ -158,7 +197,56 @@ export const updateTransaction = async (req, res) => {
       return res.status(400).json({ error: 'Amount must be a number' });
     }
 
-    if (transaction.bankAccountId) {
+    const nextType = type || transaction.type;
+    const nextAmount = amount !== undefined ? amount : transaction.amount;
+    const nextBankAccountId = bankAccountId === undefined ? transaction.bankAccountId : bankAccountId;
+    const nextToBankAccountId = toBankAccountId === undefined ? transaction.toBankAccountId : toBankAccountId;
+
+    if (!['income', 'expense', 'transfer'].includes(nextType)) {
+      return res.status(400).json({ error: 'Type must be income, expense, or transfer' });
+    }
+
+    if (nextType === 'transfer') {
+      if (!nextBankAccountId || !nextToBankAccountId) {
+        return res.status(400).json({ error: 'Transfer requires from and to bank accounts' });
+      }
+      if (String(nextBankAccountId) === String(nextToBankAccountId)) {
+        return res.status(400).json({ error: 'Transfer accounts must be different' });
+      }
+
+      const [fromAccount, toAccount] = await Promise.all([
+        BankAccount.findOne({ _id: nextBankAccountId, userId: req.user.userId }),
+        BankAccount.findOne({ _id: nextToBankAccountId, userId: req.user.userId })
+      ]);
+
+      if (!fromAccount || !toAccount) {
+        return res.status(404).json({ error: 'Bank account not found' });
+      }
+    } else if (nextBankAccountId) {
+      const bankAccount = await BankAccount.findOne({
+        _id: nextBankAccountId,
+        userId: req.user.userId
+      });
+
+      if (!bankAccount) {
+        return res.status(404).json({ error: 'Bank account not found' });
+      }
+    }
+
+    if (transaction.type === 'transfer') {
+      if (transaction.bankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          transaction.bankAccountId,
+          { $inc: { balance: transaction.amount } }
+        );
+      }
+      if (transaction.toBankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          transaction.toBankAccountId,
+          { $inc: { balance: -transaction.amount } }
+        );
+      }
+    } else if (transaction.bankAccountId) {
       // Revert old balance change
       const oldBalanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
       await BankAccount.findByIdAndUpdate(
@@ -171,9 +259,10 @@ export const updateTransaction = async (req, res) => {
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       id,
       {
-        bankAccountId: bankAccountId === undefined ? transaction.bankAccountId : bankAccountId,
-        type: type || transaction.type,
-        amount: amount !== undefined ? amount : transaction.amount,
+        bankAccountId: nextBankAccountId,
+        toBankAccountId: nextType === 'transfer' ? nextToBankAccountId : null,
+        type: nextType,
+        amount: nextAmount,
         category: category !== undefined ? category : transaction.category,
         source: source !== undefined ? source : transaction.source,
         notes: notes !== undefined ? notes : transaction.notes,
@@ -182,7 +271,20 @@ export const updateTransaction = async (req, res) => {
       { new: true }
     );
 
-    if (updatedTransaction.bankAccountId) {
+    if (updatedTransaction.type === 'transfer') {
+      if (updatedTransaction.bankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          updatedTransaction.bankAccountId,
+          { $inc: { balance: -updatedTransaction.amount } }
+        );
+      }
+      if (updatedTransaction.toBankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          updatedTransaction.toBankAccountId,
+          { $inc: { balance: updatedTransaction.amount } }
+        );
+      }
+    } else if (updatedTransaction.bankAccountId) {
       // Apply new balance change
       const newBalanceChange = updatedTransaction.type === 'income' ? updatedTransaction.amount : -updatedTransaction.amount;
       await BankAccount.findByIdAndUpdate(
@@ -196,6 +298,7 @@ export const updateTransaction = async (req, res) => {
       transaction: {
         id: updatedTransaction._id,
         bank_account_id: updatedTransaction.bankAccountId,
+        to_bank_account_id: updatedTransaction.toBankAccountId,
         type: updatedTransaction.type,
         amount: updatedTransaction.amount,
         category: updatedTransaction.category,
@@ -224,7 +327,20 @@ export const deleteTransaction = async (req, res) => {
       return res.status(404).json({ error: 'Transaction not found' });
     }
 
-    if (transaction.bankAccountId) {
+    if (transaction.type === 'transfer') {
+      if (transaction.bankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          transaction.bankAccountId,
+          { $inc: { balance: transaction.amount } }
+        );
+      }
+      if (transaction.toBankAccountId) {
+        await BankAccount.findByIdAndUpdate(
+          transaction.toBankAccountId,
+          { $inc: { balance: -transaction.amount } }
+        );
+      }
+    } else if (transaction.bankAccountId) {
       // Revert balance change
       const balanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
       await BankAccount.findByIdAndUpdate(

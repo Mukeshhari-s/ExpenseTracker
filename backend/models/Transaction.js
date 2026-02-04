@@ -12,10 +12,15 @@ const transactionSchema = new mongoose.Schema(
       ref: 'BankAccount',
       required: false,
     },
+    toBankAccountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BankAccount',
+      required: false,
+    },
     type: {
       type: String,
       required: [true, 'Please specify transaction type'],
-      enum: ['income', 'expense'],
+      enum: ['income', 'expense', 'transfer'],
     },
     amount: {
       type: Number,

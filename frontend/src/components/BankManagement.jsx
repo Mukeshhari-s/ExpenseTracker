@@ -11,6 +11,7 @@ import {
   Edit2, 
   ArrowUpCircle, 
   ArrowDownCircle,
+  ArrowLeftRight,
   Filter,
   Download
 } from 'lucide-react';
@@ -37,6 +38,7 @@ function BankManagement() {
 
   const [transactionForm, setTransactionForm] = useState({
     bank_account_id: 'cash',
+    to_bank_account_id: '',
     type: 'expense',
     amount: '',
     category: '',
@@ -119,7 +121,8 @@ function BankManagement() {
 
   const handleAddTransaction = () => {
     setTransactionForm({
-      bank_account_id: 'cash',
+      bank_account_id: banks.length > 0 ? banks[0].id : 'cash',
+      to_bank_account_id: banks.length > 1 ? banks[1].id : '',
       type: 'expense',
       amount: '',
       category: '',
@@ -134,6 +137,7 @@ function BankManagement() {
   const handleEditTransaction = (transaction) => {
     setTransactionForm({
       bank_account_id: transaction.bank_account_id || 'cash',
+      to_bank_account_id: transaction.to_bank_account_id || '',
       type: transaction.type,
       amount: transaction.amount,
       category: transaction.category || '',
@@ -148,9 +152,27 @@ function BankManagement() {
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
     try {
+      if (transactionForm.type === 'transfer') {
+        if (!transactionForm.bank_account_id || !transactionForm.to_bank_account_id) {
+          alert('Please select both From and To accounts for a transfer');
+          return;
+        }
+        if (transactionForm.bank_account_id === 'cash') {
+          alert('Transfers must use a bank account (not cash)');
+          return;
+        }
+        if (transactionForm.bank_account_id === transactionForm.to_bank_account_id) {
+          alert('From and To accounts must be different');
+          return;
+        }
+      }
+
       const payload = {
         ...transactionForm,
         bank_account_id: transactionForm.bank_account_id === 'cash' ? null : transactionForm.bank_account_id,
+        to_bank_account_id: transactionForm.type === 'transfer'
+          ? transactionForm.to_bank_account_id
+          : null,
       };
       if (editingTransaction) {
         await transactionAPI.update(editingTransaction.id, payload);
@@ -250,27 +272,43 @@ function BankManagement() {
                 <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg hover:bg-gray-700">
                   <div className="flex items-center space-x-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income' ? 'bg-green-900/20' : 'bg-red-900/20'
+                      transaction.type === 'income'
+                        ? 'bg-green-900/20'
+                        : transaction.type === 'expense'
+                        ? 'bg-red-900/20'
+                        : 'bg-blue-900/20'
                     }`}>
                       {transaction.type === 'income' ? (
                         <ArrowUpCircle className="w-6 h-6 text-green-600" />
-                      ) : (
+                      ) : transaction.type === 'expense' ? (
                         <ArrowDownCircle className="w-6 h-6 text-red-600" />
+                      ) : (
+                        <ArrowLeftRight className="w-6 h-6 text-blue-400" />
                       )}
                     </div>
                     <div>
                       <p className="font-medium text-gray-100">
-                        {transaction.category || transaction.source || transaction.type}
+                        {transaction.type === 'transfer'
+                          ? 'Transfer'
+                          : transaction.category || transaction.source || transaction.type}
                       </p>
                       <p className="text-sm text-gray-300">
-                        {transaction.bank_name} • {formatDate(transaction.date)}
+                        {transaction.type === 'transfer'
+                          ? `${transaction.bank_name} → ${transaction.to_bank_name || 'Unknown'}`
+                          : transaction.bank_name} • {formatDate(transaction.date)}
                       </p>
                       {transaction.notes && <p className="text-xs text-gray-400 mt-1">{transaction.notes}</p>}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className={`text-lg font-bold ${transaction.type === 'income' ? 'profit' : 'loss'}`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    <div className={`text-lg font-bold ${
+                      transaction.type === 'income'
+                        ? 'profit'
+                        : transaction.type === 'expense'
+                        ? 'loss'
+                        : 'text-blue-400'
+                    }`}>
+                      {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}{formatCurrency(transaction.amount)}
                     </div>
                     <button onClick={() => handleEditTransaction(transaction)} className="p-2 hover:bg-gray-700 rounded">
                       <Edit2 className="w-4 h-4 text-gray-300" />
@@ -329,19 +367,35 @@ function BankManagement() {
               <h3 className="text-xl font-bold text-gray-100 mb-4">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
               <form onSubmit={handleSaveTransaction} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Bank Account</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">
+                    {transactionForm.type === 'transfer' ? 'From Account' : 'Bank Account'}
+                  </label>
                   <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field">
-                    <option value="cash">Cash (Default)</option>
+                    {transactionForm.type !== 'transfer' && (
+                      <option value="cash">Cash (Default)</option>
+                    )}
                     {banks.map((bank) => (
                       <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
                     ))}
                   </select>
                 </div>
+                {transactionForm.type === 'transfer' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-200 mb-1">To Account</label>
+                    <select value={transactionForm.to_bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, to_bank_account_id: e.target.value})} className="input-field" required>
+                      <option value="">Select account</option>
+                      {banks.map((bank) => (
+                        <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
                   <select value={transactionForm.type} onChange={(e) => setTransactionForm({...transactionForm, type: e.target.value})} className="input-field" required>
                     <option value="expense">Expense</option>
                     <option value="income">Income</option>
+                    <option value="transfer">Transfer</option>
                   </select>
                 </div>
                 <div>
@@ -353,12 +407,12 @@ function BankManagement() {
                     <label className="block text-sm font-medium text-gray-200 mb-1">Category</label>
                     <input type="text" value={transactionForm.category} onChange={(e) => setTransactionForm({...transactionForm, category: e.target.value})} className="input-field" placeholder="e.g., Food, Transport, Entertainment" />
                   </div>
-                ) : (
+                ) : transactionForm.type === 'income' ? (
                   <div>
                     <label className="block text-sm font-medium text-gray-200 mb-1">Source</label>
                     <input type="text" value={transactionForm.source} onChange={(e) => setTransactionForm({...transactionForm, source: e.target.value})} className="input-field" placeholder="e.g., Salary, Freelance" />
                   </div>
-                )}
+                ) : null}
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-1">Date</label>
                   <DatePicker 
