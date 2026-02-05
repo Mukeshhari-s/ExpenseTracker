@@ -49,28 +49,34 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900/20 to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <DollarSign className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl mb-6 shadow-lg pulse-glow">
+            <DollarSign className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-100 mb-2">
+          <h1 className="text-4xl font-bold gradient-text mb-3">
             Finance Tracker
           </h1>
-          <p className="text-gray-300">
+          <p className="text-gray-300 text-lg">
             Your personal expense & investment manager
           </p>
         </div>
 
         {/* Toggle Login/Register */}
-        <div className="flex border-b border-gray-700 mb-6">
+        <div className="flex bg-gray-800/50 backdrop-blur-sm rounded-2xl p-1 mb-8">
           <button
             type="button"
-            className={`flex-1 py-3 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 text-center font-semibold rounded-xl transition-all duration-300 ${
               isLogin
-                ? 'border-b-2 border-blue-500 text-blue-400'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                 : 'text-gray-400 hover:text-gray-200'
             }`}
             onClick={() => {
@@ -83,9 +89,9 @@ function Login() {
           </button>
           <button
             type="button"
-            className={`flex-1 py-3 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 text-center font-semibold rounded-xl transition-all duration-300 ${
               !isLogin
-                ? 'border-b-2 border-blue-500 text-blue-400'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                 : 'text-gray-400 hover:text-gray-200'
             }`}
             onClick={() => {
@@ -100,16 +106,16 @@ function Login() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-900/20 border border-red-800 text-red-400 rounded-lg text-sm">
+          <div className="mb-6 p-4 bg-red-500/10 backdrop-blur-sm border border-red-500/20 text-red-400 rounded-2xl text-sm">
             {error}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
                 Full Name
               </label>
               <input
@@ -125,7 +131,7 @@ function Login() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
               Email
             </label>
             <input
@@ -140,7 +146,7 @@ function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
               Password
             </label>
             <input
@@ -157,7 +163,7 @@ function Login() {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
                 Preferred Currency
               </label>
               <select
@@ -178,17 +184,17 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full btn-primary py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? (
               <span className="flex items-center justify-center">
-                <div className="spinner mr-2 w-5 h-5 border-2"></div>
+                <div className="spinner mr-3 w-6 h-6 border-2"></div>
                 Processing...
               </span>
             ) : isLogin ? (
-              'Login'
+              'Sign In'
             ) : (
-              'Register'
+              'Create Account'
             )}
           </button>
         </form>

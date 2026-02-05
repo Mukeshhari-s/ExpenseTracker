@@ -3,7 +3,8 @@ import Navbar from './Navbar';
 import DatePicker from './DatePicker';
 import { 
   bankAPI, 
-  transactionAPI 
+  transactionAPI,
+  getApiErrorMessage
 } from '../services/api';
 import { 
   Plus, 
@@ -29,6 +30,7 @@ function BankManagement() {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const [showBankModal, setShowBankModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -63,9 +65,22 @@ function BankManagement() {
     fetchData();
   }, [filters]);
 
+  // Prevent background scrolling when modals are open
+  useEffect(() => {
+    if (showBankModal || showTransactionModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    // Cleanup on unmount
+    return () => document.body.classList.remove('modal-open');
+  }, [showBankModal, showTransactionModal]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError('');
       const [banksRes, transactionsRes, categoriesRes] = await Promise.all([
         bankAPI.getAll(),
         transactionAPI.getAll(filters),
@@ -76,7 +91,7 @@ function BankManagement() {
       setTransactions(transactionsRes.data.transactions || []);
       setCategories(categoriesRes.data.categories || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      setError(getApiErrorMessage(error, 'Error fetching bank data'));
     } finally {
       setLoading(false);
     }
@@ -222,6 +237,18 @@ function BankManagement() {
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800 text-red-400 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading">
+            <div className="spinner" />
+          </div>
+        ) : (
+          <>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4 sm:mb-6">Bank Accounts & Transactions</h1>
 
         {/* Bank Accounts Section */}
@@ -340,110 +367,120 @@ function BankManagement() {
 
         {/* Bank Modal */}
         {showBankModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-bold text-gray-100 mb-3">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
-              <form onSubmit={handleSaveBank} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Bank Name</label>
-                  <input type="text" value={bankForm.bank_name} onChange={(e) => setBankForm({...bankForm, bank_name: e.target.value})} className="input-field" required />
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-hidden rounded-2xl bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div className="bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <h3 className="text-lg font-bold text-gray-100 mb-4">{editingBank ? 'Edit' : 'Add'} Bank Account</h3>
+                  <form onSubmit={handleSaveBank} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Bank Name</label>
+                      <input type="text" value={bankForm.bank_name} onChange={(e) => setBankForm({...bankForm, bank_name: e.target.value})} className="input-field" required />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Account Number</label>
+                      <input type="text" value={bankForm.account_number} onChange={(e) => setBankForm({...bankForm, account_number: e.target.value})} className="input-field" required />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Account Type</label>
+                      <select value={bankForm.account_type} onChange={(e) => setBankForm({...bankForm, account_type: e.target.value})} className="input-field">
+                        <option value="Savings">Savings</option>
+                        <option value="Current">Current</option>
+                        <option value="Checking">Checking</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Initial Balance</label>
+                      <input type="number" step="0.01" value={bankForm.balance} onChange={(e) => setBankForm({...bankForm, balance: parseFloat(e.target.value) || 0})} className="input-field" />
+                    </div>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Number</label>
-                  <input type="text" value={bankForm.account_number} onChange={(e) => setBankForm({...bankForm, account_number: e.target.value})} className="input-field" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Type</label>
-                  <select value={bankForm.account_type} onChange={(e) => setBankForm({...bankForm, account_type: e.target.value})} className="input-field">
-                    <option value="Savings">Savings</option>
-                    <option value="Current">Current</option>
-                    <option value="Checking">Checking</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Initial Balance</label>
-                  <input type="number" step="0.01" value={bankForm.balance} onChange={(e) => setBankForm({...bankForm, balance: parseFloat(e.target.value) || 0})} className="input-field" />
-                </div>
-                <div className="flex space-x-3">
-                  <button type="submit" className="flex-1 btn-primary">Save</button>
+                <div className="bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                  <button type="submit" onClick={handleSaveBank} className="flex-1 btn-primary">Save</button>
                   <button type="button" onClick={() => setShowBankModal(false)} className="flex-1 btn-secondary">Cancel</button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Transaction Modal */}
         {showTransactionModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-bold text-gray-100 mb-3">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
-              <form onSubmit={handleSaveTransaction} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">
-                    {transactionForm.type === 'transfer' ? 'From Account' : 'Bank Account'}
-                  </label>
-                  <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field">
-                    <option value="cash">Cash (Default)</option>
-                    {banks.filter(b => !b.is_cash).map((bank) => (
-                      <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
-                    ))}
-                  </select>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-visible rounded-2xl bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div className="bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4 relative overflow-visible">
+                  <h3 className="text-lg font-bold text-gray-100 mb-4">{editingTransaction ? 'Edit' : 'Add'} Transaction</h3>
+                  <form onSubmit={handleSaveTransaction} className="space-y-4 relative">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">
+                        {transactionForm.type === 'transfer' ? 'From Account' : 'Bank Account'}
+                      </label>
+                      <select value={transactionForm.bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, bank_account_id: e.target.value})} className="input-field">
+                        <option value="cash">Cash (Default)</option>
+                        {banks.filter(b => !b.is_cash).map((bank) => (
+                          <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {transactionForm.type === 'transfer' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-200 mb-2">To Account</label>
+                        <select value={transactionForm.to_bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, to_bank_account_id: e.target.value})} className="input-field" required>
+                          <option value="">Select account</option>
+                          <option value="cash">Cash</option>
+                          {banks.filter(b => !b.is_cash).map((bank) => (
+                            <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Type</label>
+                      <select value={transactionForm.type} onChange={(e) => setTransactionForm({...transactionForm, type: e.target.value})} className="input-field" required>
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                        <option value="transfer">Transfer</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Amount</label>
+                      <input type="number" step="0.01" value={transactionForm.amount} onChange={(e) => setTransactionForm({...transactionForm, amount: e.target.value})} className="input-field" required />
+                    </div>
+                    {transactionForm.type === 'expense' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-200 mb-2">Category</label>
+                        <input type="text" value={transactionForm.category} onChange={(e) => setTransactionForm({...transactionForm, category: e.target.value})} className="input-field" placeholder="e.g., Food, Transport, Entertainment" />
+                      </div>
+                    ) : transactionForm.type === 'income' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-200 mb-2">Source</label>
+                        <input type="text" value={transactionForm.source} onChange={(e) => setTransactionForm({...transactionForm, source: e.target.value})} className="input-field" placeholder="e.g., Salary, Freelance" />
+                      </div>
+                    ) : null}
+                    <div className="relative z-10">
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Date</label>
+                      <DatePicker 
+                        value={transactionForm.date} 
+                        onChange={(date) => setTransactionForm({...transactionForm, date})}
+                        label="Select transaction date"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Notes (Optional)</label>
+                      <textarea value={transactionForm.notes} onChange={(e) => setTransactionForm({...transactionForm, notes: e.target.value})} className="input-field" rows="2"></textarea>
+                    </div>
+                  </form>
                 </div>
-                {transactionForm.type === 'transfer' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-1">To Account</label>
-                    <select value={transactionForm.to_bank_account_id} onChange={(e) => setTransactionForm({...transactionForm, to_bank_account_id: e.target.value})} className="input-field" required>
-                      <option value="">Select account</option>
-                      <option value="cash">Cash</option>
-                      {banks.filter(b => !b.is_cash).map((bank) => (
-                        <option key={bank.id} value={bank.id}>{bank.bank_name} - {bank.account_type}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
-                  <select value={transactionForm.type} onChange={(e) => setTransactionForm({...transactionForm, type: e.target.value})} className="input-field" required>
-                    <option value="expense">Expense</option>
-                    <option value="income">Income</option>
-                    <option value="transfer">Transfer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Amount</label>
-                  <input type="number" step="0.01" value={transactionForm.amount} onChange={(e) => setTransactionForm({...transactionForm, amount: e.target.value})} className="input-field" required />
-                </div>
-                {transactionForm.type === 'expense' ? (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-1">Category</label>
-                    <input type="text" value={transactionForm.category} onChange={(e) => setTransactionForm({...transactionForm, category: e.target.value})} className="input-field" placeholder="e.g., Food, Transport, Entertainment" />
-                  </div>
-                ) : transactionForm.type === 'income' ? (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-1">Source</label>
-                    <input type="text" value={transactionForm.source} onChange={(e) => setTransactionForm({...transactionForm, source: e.target.value})} className="input-field" placeholder="e.g., Salary, Freelance" />
-                  </div>
-                ) : null}
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Date</label>
-                  <DatePicker 
-                    value={transactionForm.date} 
-                    onChange={(date) => setTransactionForm({...transactionForm, date})}
-                    label="Select transaction date"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Notes (Optional)</label>
-                  <textarea value={transactionForm.notes} onChange={(e) => setTransactionForm({...transactionForm, notes: e.target.value})} className="input-field" rows="2"></textarea>
-                </div>
-                <div className="flex space-x-3">
-                  <button type="submit" className="flex-1 btn-primary">Save</button>
+                <div className="bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                  <button type="submit" onClick={handleSaveTransaction} className="flex-1 btn-primary">Save</button>
                   <button type="button" onClick={() => setShowTransactionModal(false)} className="flex-1 btn-secondary">Cancel</button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </>

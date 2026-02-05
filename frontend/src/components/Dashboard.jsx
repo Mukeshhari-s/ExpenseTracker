@@ -4,7 +4,8 @@ import Navbar from './Navbar';
 import { 
   transactionAPI, 
   bankAPI, 
-  investmentAPI 
+  investmentAPI,
+  getApiErrorMessage
 } from '../services/api';
 import { 
   TrendingUp, 
@@ -48,6 +49,7 @@ function Dashboard() {
   const user = getUser();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
   
   const [summary, setSummary] = useState({
     monthlyExpenses: 0,
@@ -75,6 +77,7 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError('');
 
       console.log('Fetching dashboard data...');
 
@@ -108,8 +111,7 @@ function Dashboard() {
 
       setRecentTransactions(transactions.transactions || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      alert('Error loading dashboard: ' + (error.response?.data?.error || error.message));
+      setError(getApiErrorMessage(error, 'Error loading dashboard'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -190,6 +192,18 @@ function Dashboard() {
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800 text-red-400 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading">
+            <div className="spinner" />
+          </div>
+        ) : (
+          <>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
           <div>
@@ -680,6 +694,8 @@ function Dashboard() {
             </div>
           </button>
         </div>
+          </>
+        )}
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function DatePicker({ value, onChange, label = 'Select Date' }) {
@@ -8,6 +8,21 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
       ? new Date(value.includes('T') ? value : `${value}T00:00:00`)
       : new Date()
   );
+  const containerRef = useRef(null);
+
+  // Handle click outside to close calendar
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setShowCalendar(false);
+      }
+    }
+
+    if (showCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showCalendar]);
 
   const formatLocalDate = (date) => {
     const year = date.getFullYear();
@@ -98,7 +113,7 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setShowCalendar(!showCalendar)}
@@ -121,13 +136,13 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
       </button>
 
       {showCalendar && (
-        <div className="absolute top-full left-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-4 z-50 w-80">
+        <div className="absolute top-full left-0 mt-2 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-6 z-[9999] w-80 max-h-96 overflow-y-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-gray-700 rounded transition-colors"
+              className="p-2 hover:bg-gray-700 rounded-xl transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-gray-400" />
             </button>
@@ -137,7 +152,7 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 hover:bg-gray-700 rounded transition-colors"
+              className="p-2 hover:bg-gray-700 rounded-xl transition-colors"
             >
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
@@ -156,21 +171,21 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
           </div>
 
           {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1">
             {days.map((day, index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => day && handleDateClick(day)}
                 disabled={!day}
-                className={`py-2 text-sm font-medium rounded transition-colors ${
+                className={`py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                   !day
                     ? 'text-gray-600 cursor-default'
                     : isSelected(day)
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white shadow-lg scale-105'
                     : isToday(day)
-                    ? 'bg-blue-500/30 text-blue-400 border border-blue-500'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-blue-500/30 text-blue-400 border border-blue-500 hover:bg-blue-500/50'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white hover:scale-105'
                 }`}
               >
                 {day}
@@ -188,7 +203,7 @@ function DatePicker({ value, onChange, label = 'Select Date' }) {
               setCurrentDate(today);
               setShowCalendar(false);
             }}
-            className="w-full mt-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-gray-100 rounded transition-colors"
+            className="w-full mt-6 py-3 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
           >
             Today
           </button>

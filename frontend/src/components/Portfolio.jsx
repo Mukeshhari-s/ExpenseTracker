@@ -5,7 +5,8 @@ import DatePicker from './DatePicker';
 import { 
   investmentAPI, 
   dematAPI, 
-  stockAPI 
+  stockAPI,
+  getApiErrorMessage
 } from '../services/api';
 import { 
   Plus, 
@@ -25,6 +26,7 @@ function Portfolio() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
   
   const [showDematModal, setShowDematModal] = useState(false);
   const [showInvestmentModal, setShowInvestmentModal] = useState(false);
@@ -50,9 +52,22 @@ function Portfolio() {
     fetchData();
   }, []);
 
+  // Prevent background scrolling when modals are open
+  useEffect(() => {
+    if (showDematModal || showInvestmentModal || showStockSearch) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    // Cleanup on unmount
+    return () => document.body.classList.remove('modal-open');
+  }, [showDematModal, showInvestmentModal, showStockSearch]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError('');
       const [dematRes, portfolioRes] = await Promise.all([
         dematAPI.getAll(),
         investmentAPI.getPortfolioSummary(),
@@ -61,7 +76,7 @@ function Portfolio() {
       setDematAccounts(dematRes.data.accounts || []);
       setPortfolio(portfolioRes.data);
     } catch (error) {
-      console.error('Error fetching portfolio data:', error);
+      setError(getApiErrorMessage(error, 'Error loading portfolio'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -171,6 +186,18 @@ function Portfolio() {
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800 text-red-400 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading">
+            <div className="spinner" />
+          </div>
+        ) : (
+          <>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Investment Portfolio</h1>
@@ -333,145 +360,159 @@ function Portfolio() {
 
         {/* Demat Modal */}
         {showDematModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingDemat ? 'Edit' : 'Add'} Demat Account</h3>
-              <form onSubmit={handleSaveDemat} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Broker Name</label>
-                  <input 
-                    type="text" 
-                    value={dematForm.broker_name} 
-                    onChange={(e) => setDematForm({...dematForm, broker_name: e.target.value})} 
-                    className="input-field" 
-                    placeholder="e.g., Zerodha, Upstox, Angel One"
-                    required 
-                  />
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-hidden rounded-2xl bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div className="bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <h3 className="text-xl font-bold text-gray-100 mb-4">{editingDemat ? 'Edit' : 'Add'} Demat Account</h3>
+                  <form onSubmit={handleSaveDemat} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Broker Name</label>
+                      <input 
+                        type="text" 
+                        value={dematForm.broker_name} 
+                        onChange={(e) => setDematForm({...dematForm, broker_name: e.target.value})} 
+                        className="input-field" 
+                        placeholder="e.g., Zerodha, Upstox, Angel One"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Account Number</label>
+                      <input 
+                        type="text" 
+                        value={dematForm.account_number} 
+                        onChange={(e) => setDematForm({...dematForm, account_number: e.target.value})} 
+                        className="input-field" 
+                        required 
+                      />
+                    </div>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Account Number</label>
-                  <input 
-                    type="text" 
-                    value={dematForm.account_number} 
-                    onChange={(e) => setDematForm({...dematForm, account_number: e.target.value})} 
-                    className="input-field" 
-                    required 
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button type="submit" className="flex-1 btn-primary">Save</button>
+                <div className="bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                  <button type="submit" onClick={handleSaveDemat} className="flex-1 btn-primary">Save</button>
                   <button type="button" onClick={() => setShowDematModal(false)} className="flex-1 btn-secondary">Cancel</button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Investment Modal */}
         {showInvestmentModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">{editingInvestment ? 'Edit' : 'Add'} Investment</h3>
-              <form onSubmit={handleSaveInvestment} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Demat Account</label>
-                  <select 
-                    value={investmentForm.demat_account_id} 
-                    onChange={(e) => setInvestmentForm({...investmentForm, demat_account_id: e.target.value})} 
-                    className="input-field" 
-                    required
-                  >
-                    <option value="">Select Demat Account</option>
-                    {dematAccounts.map((demat) => (
-                      <option key={demat.id} value={demat.id}>{demat.broker_name}</option>
-                    ))}
-                  </select>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-hidden rounded-2xl bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div className="bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <h3 className="text-xl font-bold text-gray-100 mb-6">{editingInvestment ? 'Edit' : 'Add'} Investment</h3>
+                  <form onSubmit={handleSaveInvestment} className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Demat Account</label>
+                      <select 
+                        value={investmentForm.demat_account_id} 
+                        onChange={(e) => setInvestmentForm({...investmentForm, demat_account_id: e.target.value})} 
+                        className="input-field" 
+                        required
+                      >
+                        <option value="">Select Demat Account</option>
+                        {dematAccounts.map((demat) => (
+                          <option key={demat.id} value={demat.id}>{demat.broker_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Stock Symbol</label>
+                      <input 
+                        type="text" 
+                        value={investmentForm.stock_symbol} 
+                        onChange={(e) => setInvestmentForm({...investmentForm, stock_symbol: e.target.value.toUpperCase()})} 
+                        className="input-field" 
+                        placeholder="e.g., AAPL, GOOGL, RELIANCE.NS"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Stock Name</label>
+                      <input 
+                        type="text" 
+                        value={investmentForm.stock_name} 
+                        onChange={(e) => setInvestmentForm({...investmentForm, stock_name: e.target.value})} 
+                        className="input-field" 
+                        placeholder="e.g., Apple Inc."
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowStockSearch(true)}
+                        className="w-full btn-secondary"
+                      >
+                        Search & autofill stock
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-200 mb-2">Quantity</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          value={investmentForm.quantity} 
+                          onChange={(e) => setInvestmentForm({...investmentForm, quantity: e.target.value})} 
+                          className="input-field" 
+                          required 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-200 mb-2">Buy Price</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          value={investmentForm.buy_price} 
+                          onChange={(e) => setInvestmentForm({...investmentForm, buy_price: e.target.value})} 
+                          className="input-field" 
+                          required 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-200 mb-2">Buy Date</label>
+                      <DatePicker 
+                        value={investmentForm.buy_date} 
+                        onChange={(date) => setInvestmentForm({...investmentForm, buy_date: date})}
+                        label="Select purchase date"
+                      />
+                    </div>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Stock Symbol</label>
-                  <input 
-                    type="text" 
-                    value={investmentForm.stock_symbol} 
-                    onChange={(e) => setInvestmentForm({...investmentForm, stock_symbol: e.target.value.toUpperCase()})} 
-                    className="input-field" 
-                    placeholder="e.g., AAPL, GOOGL, RELIANCE.NS"
-                    required 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Stock Name</label>
-                  <input 
-                    type="text" 
-                    value={investmentForm.stock_name} 
-                    onChange={(e) => setInvestmentForm({...investmentForm, stock_name: e.target.value})} 
-                    className="input-field" 
-                    placeholder="e.g., Apple Inc."
-                    required 
-                  />
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowStockSearch(true)}
-                    className="w-full btn-secondary"
-                  >
-                    Search & autofill stock
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-1">Quantity</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={investmentForm.quantity} 
-                      onChange={(e) => setInvestmentForm({...investmentForm, quantity: e.target.value})} 
-                      className="input-field" 
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-1">Buy Price</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={investmentForm.buy_price} 
-                      onChange={(e) => setInvestmentForm({...investmentForm, buy_price: e.target.value})} 
-                      className="input-field" 
-                      required 
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">Buy Date</label>
-                  <DatePicker 
-                    value={investmentForm.buy_date} 
-                    onChange={(date) => setInvestmentForm({...investmentForm, buy_date: date})}
-                    label="Select purchase date"
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button type="submit" className="flex-1 btn-primary">Save</button>
+                <div className="bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                  <button type="submit" onClick={handleSaveInvestment} className="flex-1 btn-primary">Save</button>
                   <button type="button" onClick={() => setShowInvestmentModal(false)} className="flex-1 btn-secondary">Cancel</button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Stock Search Overlay */}
         {showStockSearch && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg p-4 w-full max-w-3xl shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-lg font-bold text-gray-100">Search Stocks</h4>
-                <button onClick={() => setShowStockSearch(false)} className="p-1 hover:bg-gray-700 rounded">
-                  <X className="w-5 h-5 text-gray-300" />
-                </button>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-hidden rounded-2xl bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+                <div className="bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xl font-bold text-gray-100">Search Stocks</h4>
+                    <button onClick={() => setShowStockSearch(false)} className="p-2 hover:bg-gray-700 rounded-xl transition-colors">
+                      <X className="w-6 h-6 text-gray-300" />
+                    </button>
+                  </div>
+                  <StockSearch onSelect={handleStockSelected} onClose={() => setShowStockSearch(false)} showPrice={true} />
+                </div>
               </div>
-              <StockSearch onSelect={handleStockSelected} onClose={() => setShowStockSearch(false)} showPrice={true} />
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </>
